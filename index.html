@@ -23,13 +23,10 @@
 </head>
 <body>
     <div class="container">
-        <div id="installPrompt" class="install-prompt">
-            <span>Install this app on your device for easy access!</span>
-            <button onclick="installPWA()">Install</button>
-            <button onclick="dismissInstall()" style="background-color: transparent; color: white;">Dismiss</button>
+        <div class="header">
+            <img src="icon-192.png" alt="Guest Message Generator" class="logo">
+            <h1>Guest Message Generator</h1>
         </div>
-        
-        <h1>Guest Message Generator</h1>
     
     <div class="form-group">
         <label for="apartmentSelect" class="required-label">Select Apartment</label>
@@ -51,7 +48,7 @@
     <div class="form-group">
         <label for="phoneNumber" class="required-label">Mobile Number</label>
         <input type="tel" id="phoneNumber" placeholder="+381xxxxxxxxx" oninput="clearValidation()">
-        <div class="phone-help">Include country code (e.g., +381 for Serbia, +90 for Turkey)</div>
+        <div class="phone-help">Include country code (e.g., +381 for Serbia)</div>
     </div>
     
     <div class="form-group date-group">

@@ -4,11 +4,11 @@ let deferredPrompt;
 
 // Initialize PWA features
 function initializePWA() {
-    // Handle install prompt
+    // Handle install prompt (silently, without showing UI)
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        document.getElementById('installPrompt').style.display = 'block';
+        // Don't show the install prompt UI anymore
     });
 
     // Register service worker
@@ -24,7 +24,7 @@ function initializePWA() {
     }
 }
 
-// Install PWA
+// Install PWA (keep for potential future use)
 function installPWA() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
@@ -33,12 +33,11 @@ function installPWA() {
                 console.log('User accepted the A2HS prompt');
             }
             deferredPrompt = null;
-            document.getElementById('installPrompt').style.display = 'none';
         });
     }
 }
 
-// Dismiss install prompt
+// Dismiss install prompt (no longer needed but keeping for compatibility)
 function dismissInstall() {
-    document.getElementById('installPrompt').style.display = 'none';
+    // Function kept for compatibility but no longer shows UI
 }

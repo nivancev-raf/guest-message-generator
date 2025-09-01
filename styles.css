@@ -195,31 +195,32 @@ button:disabled {
     font-weight: 500;
 }
 
-.install-prompt {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    padding: 16px;
-    text-align: center;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    display: none;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.install-prompt button {
-    background-color: white;
-    color: #007bff;
-    margin-left: 12px;
-    font-weight: 600;
-}
-
-/* Header Styling */
-h1 {
-    color: #2c3e50;
+/* Header and Logo Styling */
+.header {
     text-align: center;
     margin-bottom: 32px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.15);
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: white;
+    padding: 8px;
+}
+
+h1 {
+    color: white;
+    margin: 0;
     font-size: 28px;
     font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Mobile Responsive Design */
@@ -232,9 +233,22 @@ h1 {
         background-color: #f8f9fa;
     }
     
-    h1 {
-        font-size: 24px;
+    .header {
+        padding: 20px;
         margin-bottom: 24px;
+        border-radius: 12px;
+    }
+    
+    .logo {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+    }
+    
+    h1 {
+        font-size: 22px;
+        margin: 0;
     }
     
     .form-group, .date-group {
