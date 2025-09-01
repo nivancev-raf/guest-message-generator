@@ -1,0 +1,182 @@
+/* Main Styles */
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Form Groups and Date Layout */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.date-group {
+    display: flex;
+    gap: 15px;
+}
+
+.date-field {
+    flex: 1;
+}
+
+.date-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"], input[type="date"], input[type="tel"], select {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px; /* Prevents zoom on iOS */
+}
+
+.required {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.required-label::after {
+    content: " *";
+    color: #dc3545;
+}
+
+/* Button Styles */
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    min-height: 44px; /* iOS touch target size */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.copy-btn {
+    background-color: #28a745;
+}
+
+.copy-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.generate-btn {
+    background-color: #007bff;
+}
+
+.generate-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.whatsapp-auto-btn {
+    background-color: #128c7e;
+}
+
+.whatsapp-auto-btn:hover:not(:disabled) {
+    background-color: #075e54;
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* UI Components */
+#output {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    white-space: pre-line;
+    font-size: 14px;
+}
+
+.phone-help {
+    font-size: 12px;
+    color: #666;
+    margin-top: 3px;
+}
+
+.apartment-info {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
+
+.install-prompt {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.install-prompt button {
+    background-color: white;
+    color: #007bff;
+    margin-left: 10px;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    
+    input[type="text"], input[type="date"], input[type="tel"], select {
+        width: 100%;
+        max-width: none;
+    }
+    
+    .date-group {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    button {
+        width: 100%;
+        margin-right: 0;
+    }
+}

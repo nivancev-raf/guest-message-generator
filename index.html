@@ -18,142 +18,8 @@
     <meta name="theme-color" content="#007bff">
     <meta name="msapplication-TileColor" content="#007bff">
     
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="date"], input[type="tel"], select {
-            width: 100%;
-            max-width: 300px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px; /* Prevents zoom on iOS */
-        }
-        .required {
-            border-color: #dc3545;
-            background-color: #fff5f5;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            font-size: 16px;
-            min-height: 44px; /* iOS touch target size */
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        #output {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            white-space: pre-line;
-            font-size: 14px;
-        }
-        .copy-btn {
-            background-color: #28a745;
-        }
-        .copy-btn:hover:not(:disabled) {
-            background-color: #218838;
-        }
-        .whatsapp-btn {
-            background-color: #25d366;
-        }
-        .whatsapp-btn:hover:not(:disabled) {
-            background-color: #20b358;
-        }
-        .whatsapp-auto-btn {
-            background-color: #128c7e;
-        }
-        .whatsapp-auto-btn:hover:not(:disabled) {
-            background-color: #075e54;
-        }
-        .phone-help {
-            font-size: 12px;
-            color: #666;
-            margin-top: 3px;
-        }
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .apartment-info {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 5px;
-            font-size: 12px;
-        }
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-        }
-        .required-label::after {
-            content: " *";
-            color: #dc3545;
-        }
-        .install-prompt {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .install-prompt button {
-            background-color: white;
-            color: #007bff;
-            margin-left: 10px;
-        }
-        
-        /* Mobile optimizations */
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            input[type="text"], input[type="date"], input[type="tel"], select {
-                width: 100%;
-                max-width: none;
-            }
-            .button-group {
-                flex-direction: column;
-            }
-            button {
-                width: 100%;
-                margin-right: 0;
-            }
-        }
-    </style>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="installPrompt" class="install-prompt">
@@ -187,276 +53,37 @@
         <div class="phone-help">Include country code (e.g., +381 for Serbia, +90 for Turkey)</div>
     </div>
     
-    <div class="form-group">
-        <label for="checkIn" class="required-label">Check-in Date</label>
-        <input type="date" id="checkIn" onchange="clearValidation()">
+    <div class="form-group date-group">
+        <div class="date-field">
+            <label for="checkIn" class="required-label">Check-in Date</label>
+            <input type="date" id="checkIn" onchange="clearValidation()">
+        </div>
+        <div class="date-field">
+            <label for="checkOut" class="required-label">Check-out Date</label>
+            <input type="date" id="checkOut" onchange="clearValidation()">
+        </div>
     </div>
     
     <div class="form-group">
-        <label for="checkOut" class="required-label">Check-out Date</label>
-        <input type="date" id="checkOut" onchange="clearValidation()">
+        <label for="reservationPrice" class="required-label">Reservation Price</label>
+        <input type="text" id="reservationPrice" placeholder="e.g., €120 per night" oninput="clearValidation()">
     </div>
     
     <div id="errorMessage" class="error-message" style="display: none;"></div>
     
     <div class="button-group">
-        <button id="generateBtn" onclick="generateMessage()">Generate Message</button>
+        <button id="generateEnBtn" onclick="generateMessage('en')" class="generate-btn">Generate Message (English)</button>
+        <button id="generateSrBtn" onclick="generateMessage('sr')" class="generate-btn">Generate Message (Serbian)</button>
         <button id="copyBtn" onclick="copyToClipboard()" class="copy-btn" disabled>Copy to Clipboard</button>
-        <button id="whatsappBtn" onclick="sendToWhatsApp()" class="whatsapp-btn" disabled>Send via WhatsApp</button>
         <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled>Auto-Send WhatsApp</button>
     </div>
     
     <div id="output"></div>
 
-    <script>
-        // PWA Install functionality
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').style.display = 'block';
-        });
-        
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the A2HS prompt');
-                    }
-                    deferredPrompt = null;
-                    document.getElementById('installPrompt').style.display = 'none';
-                });
-            }
-        }
-        
-        function dismissInstall() {
-            document.getElementById('installPrompt').style.display = 'none';
-        }
-
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/guest-message-generator/sw.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    }, function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        const apartmentData = {
-            aqua2108: {
-                building: "BW Aqua building",
-                apartment: "2108",
-                parking: "376",
-                level: "-2",
-                address: "Hercegovačka 23"
-            },
-            aqua706: {
-                building: "BW Aqua building",
-                apartment: "706",
-                parking: "49",
-                level: "-1",
-                address: "Hercegovačka 23"
-            },
-            aqua707: {
-                building: "BW Aqua building",
-                apartment: "707",
-                parking: "48",
-                level: "-1",
-                address: "Hercegovačka 23"
-            },
-            parkview2110: {
-                building: "Parkview building",
-                apartment: "2110",
-                parking: "22",
-                level: "-1",
-                address: "Bulevar Vudroa Vilsona 8"
-            }
-        };
-
-        function updateApartmentInfo() {
-            const selectedApartment = document.getElementById('apartmentSelect').value;
-            const infoDiv = document.getElementById('apartmentInfo');
-            
-            if (selectedApartment && apartmentData[selectedApartment]) {
-                const data = apartmentData[selectedApartment];
-                infoDiv.innerHTML = `
-                    <strong>Address:</strong> ${data.address}<br>
-                    <strong>Building:</strong> ${data.building}<br>
-                    <strong>Apartment:</strong> ${data.apartment}<br>
-                    <strong>Parking:</strong> Slot ${data.parking}, Level ${data.level}
-                `;
-                infoDiv.style.display = 'block';
-            } else {
-                infoDiv.style.display = 'none';
-            }
-        }
-
-        function clearValidation() {
-            document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        function validateForm() {
-            const apartment = document.getElementById('apartmentSelect').value;
-            const guestName = document.getElementById('guestName').value.trim();
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const checkIn = document.getElementById('checkIn').value;
-            const checkOut = document.getElementById('checkOut').value;
-            
-            const errorMessage = document.getElementById('errorMessage');
-            
-            document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
-            
-            let missingFields = [];
-            let isValid = true;
-            
-            if (!apartment) {
-                missingFields.push('Apartment');
-                document.getElementById('apartmentSelect').classList.add('required');
-                isValid = false;
-            }
-            
-            if (!guestName) {
-                missingFields.push('Guest Name');
-                document.getElementById('guestName').classList.add('required');
-                isValid = false;
-            }
-            
-            if (!phoneNumber) {
-                missingFields.push('Mobile Number');
-                document.getElementById('phoneNumber').classList.add('required');
-                isValid = false;
-            }
-            
-            if (!checkIn) {
-                missingFields.push('Check-in Date');
-                document.getElementById('checkIn').classList.add('required');
-                isValid = false;
-            }
-            
-            if (!checkOut) {
-                missingFields.push('Check-out Date');
-                document.getElementById('checkOut').classList.add('required');
-                isValid = false;
-            }
-            
-            if (checkIn && checkOut && new Date(checkOut) <= new Date(checkIn)) {
-                missingFields.push('Check-out date must be after check-in date');
-                document.getElementById('checkOut').classList.add('required');
-                isValid = false;
-            }
-            
-            if (!isValid) {
-                errorMessage.textContent = `Please fill in: ${missingFields.join(', ')}`;
-                errorMessage.style.display = 'block';
-            } else {
-                errorMessage.style.display = 'none';
-            }
-            
-            return isValid;
-        }
-
-        function getOrdinalSuffix(day) {
-            if (day >= 11 && day <= 13) {
-                return 'th';
-            }
-            switch (day % 10) {
-                case 1: return 'st';
-                case 2: return 'nd';
-                case 3: return 'rd';
-                default: return 'th';
-            }
-        }
-        
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const month = date.toLocaleDateString('en-US', { month: 'long' });
-            const day = date.getDate();
-            const suffix = getOrdinalSuffix(day);
-            
-            return `${month} ${day}${suffix}`;
-        }
-        
-        function generateMessage() {
-            if (!validateForm()) {
-                return;
-            }
-            
-            const selectedApartment = document.getElementById('apartmentSelect').value;
-            const guestName = document.getElementById('guestName').value.trim();
-            const checkIn = document.getElementById('checkIn').value;
-            const checkOut = document.getElementById('checkOut').value;
-            
-            const apartmentInfo = apartmentData[selectedApartment];
-            
-            const checkInFormatted = formatDate(checkIn);
-            const checkOutFormatted = formatDate(checkOut);
-            
-            const message = `Dear ${guestName},
-Thank you for your reservation and for choosing our apartment.
-Your stay is confirmed from **${checkInFormatted}** to **${checkOutFormatted}**.
-**The address is ${apartmentInfo.address}, ${apartmentInfo.building}**.
-
-If you are **arriving by car**, the garage entrance is located next to Kaldi restaurant.
-At the ramp, you need to ring the intercom and mention apartment number ${apartmentInfo.apartment},
-parking space number ${apartmentInfo.parking} on level ${apartmentInfo.level}, and that it's the ${apartmentInfo.building === 'BW Aqua building' ? 'Aqua building' : 'Parkview building'}.
-
-The keys will be waiting for you at the reception under your name.
-Payment is made in cash, and upon your arrival we will arrange
-the most convenient time for collecting the payment.
-
-In case you are **not arriving by car**, we can organize
-our transport that will take you to the building.
-Our driver will hand you the keys and collect the payment on the spot.
-
-We look forward to your arrival and wish you a pleasant stay.`;
-            
-            document.getElementById('output').textContent = message;
-            
-            document.getElementById('copyBtn').disabled = false;
-            document.getElementById('whatsappBtn').disabled = false;
-            document.getElementById('autoWhatsappBtn').disabled = false;
-        }
-        
-        function copyToClipboard() {
-            const output = document.getElementById('output');
-            if (output.textContent) {
-                navigator.clipboard.writeText(output.textContent).then(() => {
-                    alert('Message copied to clipboard!');
-                });
-            }
-        }
-        
-        function sendToWhatsApp() {
-            const phoneNumber = document.getElementById('phoneNumber').value;
-            const output = document.getElementById('output');
-            
-            if (!output.textContent) return;
-            
-            const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-            const encodedMessage = encodeURIComponent(output.textContent);
-            const whatsappURL = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-            
-            window.open(whatsappURL, '_blank');
-        }
-        
-        function autoSendToWhatsApp() {
-            const phoneNumber = document.getElementById('phoneNumber').value;
-            const output = document.getElementById('output');
-            
-            if (!output.textContent) return;
-            
-            const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-            const encodedMessage = encodeURIComponent(output.textContent);
-            const whatsappURL = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
-            
-            window.location.href = whatsappURL;
-        }
-    </script>
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="utils.js"></script>
+    <script src="pwa.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
