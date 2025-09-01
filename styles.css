@@ -64,6 +64,27 @@ input[type="text"], input[type="date"], input[type="tel"], select {
     box-sizing: border-box;
 }
 
+/* Specific styling for date inputs */
+input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 40px;
+}
+
+/* For webkit browsers (Safari/Chrome) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+}
+
 input[type="text"]:focus, input[type="date"]:focus, input[type="tel"]:focus, select:focus {
     outline: none;
     border-color: #007bff;
@@ -261,6 +282,20 @@ h1 {
         max-width: none;
         padding: 16px;
         font-size: 16px;
+    }
+    
+    /* Enhanced mobile date input styling */
+    input[type="date"] {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23007bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+        background-size: 20px;
+        padding-right: 45px;
+        cursor: pointer;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        width: 20px;
+        height: 20px;
+        right: 16px;
     }
     
     .date-group {
