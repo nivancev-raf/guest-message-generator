@@ -1,6 +1,14 @@
 /* Main Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
@@ -8,12 +16,21 @@ body {
 
 /* Form Groups and Date Layout */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .date-group {
     display: flex;
     gap: 15px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
 }
 
 .date-field {
@@ -22,28 +39,41 @@ body {
 
 .date-field label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 15px;
 }
 
 input[type="text"], input[type="date"], input[type="tel"], select {
     width: 100%;
     max-width: 300px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 14px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
     font-size: 16px; /* Prevents zoom on iOS */
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus, input[type="date"]:focus, input[type="tel"]:focus, select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .required {
-    border-color: #dc3545;
+    border-color: #dc3545 !important;
     background-color: #fff5f5;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
 }
 
 .required-label::after {
@@ -55,128 +85,205 @@ input[type="text"], input[type="date"], input[type="tel"], select {
 button {
     background-color: #007bff;
     color: white;
-    padding: 12px 20px;
+    padding: 16px 24px;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     cursor: pointer;
-    margin-right: 10px;
-    margin-bottom: 10px;
+    margin-right: 12px;
+    margin-bottom: 12px;
     font-size: 16px;
-    min-height: 44px; /* iOS touch target size */
+    font-weight: 600;
+    min-height: 52px; /* iOS touch target size */
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
 }
 
 button:hover {
     background-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 button:disabled {
     background-color: #6c757d;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
 }
 
 .copy-btn {
     background-color: #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
 }
 
 .copy-btn:hover:not(:disabled) {
     background-color: #218838;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .generate-btn {
     background-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
 }
 
 .generate-btn:hover:not(:disabled) {
     background-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
 .whatsapp-auto-btn {
-    background-color: #128c7e;
+    background-color: #25d366;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.2);
 }
 
 .whatsapp-auto-btn:hover:not(:disabled) {
-    background-color: #075e54;
+    background-color: #20b358;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
 }
 
 .button-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
+    margin-top: 24px;
 }
 
 /* UI Components */
 #output {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
+    margin-top: 24px;
+    padding: 20px;
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
     white-space: pre-line;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .phone-help {
-    font-size: 12px;
-    color: #666;
-    margin-top: 3px;
+    font-size: 13px;
+    color: #6c757d;
+    margin-top: 6px;
+    font-style: italic;
 }
 
 .apartment-info {
-    background-color: #e9ecef;
-    padding: 10px;
-    border-radius: 4px;
-    margin-top: 5px;
-    font-size: 12px;
+    background-color: #e7f3ff;
+    border: 1px solid #b8daff;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .error-message {
     color: #dc3545;
     font-size: 14px;
-    margin-top: 10px;
-    padding: 10px;
+    margin-top: 16px;
+    padding: 12px 16px;
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-weight: 500;
 }
 
 .install-prompt {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    padding: 10px;
+    padding: 16px;
     text-align: center;
-    border-radius: 4px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
     display: none;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
 }
 
 .install-prompt button {
     background-color: white;
     color: #007bff;
-    margin-left: 10px;
+    margin-left: 12px;
+    font-weight: 600;
+}
+
+/* Header Styling */
+h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 28px;
+    font-weight: 700;
 }
 
 /* Mobile Responsive Design */
 @media (max-width: 600px) {
+    .container {
+        padding: 16px;
+    }
+    
     body {
-        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    
+    h1 {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .form-group, .date-group {
+        padding: 16px;
+        margin-bottom: 16px;
     }
     
     input[type="text"], input[type="date"], input[type="tel"], select {
         width: 100%;
         max-width: none;
+        padding: 16px;
+        font-size: 16px;
     }
     
     .date-group {
         flex-direction: column;
-        gap: 15px;
+        gap: 0;
+    }
+    
+    .date-field {
+        margin-bottom: 16px;
+    }
+    
+    .date-field:last-child {
+        margin-bottom: 0;
     }
     
     .button-group {
         flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
     }
     
     button {
         width: 100%;
         margin-right: 0;
+        padding: 18px 24px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+    
+    #output {
+        padding: 16px;
+        font-size: 14px;
+        margin-top: 20px;
+    }
+    
+    .apartment-info {
+        padding: 12px;
+        font-size: 12px;
     }
 }

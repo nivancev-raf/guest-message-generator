@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Guest Message Generator</title>
     
     <!-- PWA Manifest -->
@@ -22,13 +22,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="installPrompt" class="install-prompt">
-        <span>Install this app on your device for easy access!</span>
-        <button onclick="installPWA()">Install</button>
-        <button onclick="dismissInstall()" style="background-color: transparent; color: white;">Dismiss</button>
-    </div>
-    
-    <h1>Guest Message Generator</h1>
+    <div class="container">
+        <div id="installPrompt" class="install-prompt">
+            <span>Install this app on your device for easy access!</span>
+            <button onclick="installPWA()">Install</button>
+            <button onclick="dismissInstall()" style="background-color: transparent; color: white;">Dismiss</button>
+        </div>
+        
+        <h1>Guest Message Generator</h1>
     
     <div class="form-group">
         <label for="apartmentSelect" class="required-label">Select Apartment</label>
@@ -79,6 +80,8 @@
     </div>
     
     <div id="output"></div>
+
+    </div> <!-- end container -->
 
     <!-- Scripts -->
     <script src="data.js"></script>
