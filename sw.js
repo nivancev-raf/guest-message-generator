@@ -1,8 +1,10 @@
 const CACHE_NAME = 'guest-message-generator-v1';
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
+  '/guest-message-generator/',
+  '/guest-message-generator/index.html',
+  '/guest-message-generator/manifest.json',
+  '/guest-message-generator/icon-192.png',
+  '/guest-message-generator/icon-512.png'
 ];
 
 // Install event
