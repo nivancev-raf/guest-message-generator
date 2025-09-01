@@ -104,9 +104,10 @@ function generateMessage(language = 'en') {
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
     const reservationPrice = document.getElementById('reservationPrice').value.trim();
+    const askForDrive = document.getElementById('askForDrive').checked;
     
     const apartmentInfo = apartmentData[selectedApartment];
-    const message = generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, reservationPrice, language);
+    const message = generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, reservationPrice, language, askForDrive);
     
     document.getElementById('output').textContent = message;
     
