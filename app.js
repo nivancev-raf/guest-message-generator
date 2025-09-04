@@ -208,8 +208,8 @@ function updateButtonStates() {
     const messageButton = document.getElementById('generateMessageBtn');
     messageButton.disabled = !allFieldsFilled;
     
-    // Update WhatsApp button state and tooltip
-    updateWhatsAppTooltip();
+    // Update WhatsApp button state and validation text
+    updateWhatsAppValidation();
 }
 
 // Enable action buttons (copy, whatsapp)
@@ -219,30 +219,44 @@ function enableActionButtons() {
     // Enable WhatsApp button only if phone number is provided
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
     const whatsappBtn = document.getElementById('autoWhatsappBtn');
+    const whatsappValidation = document.getElementById('whatsappValidation');
+    
     whatsappBtn.disabled = !phoneNumber;
     
-    // Update tooltip based on phone number
-    updateWhatsAppTooltip();
+    // Show/hide validation text
+    if (!phoneNumber) {
+        whatsappValidation.style.display = 'block';
+    } else {
+        whatsappValidation.style.display = 'none';
+    }
 }
 
 // Disable action buttons
 function disableActionButtons() {
     document.getElementById('copyBtn').disabled = true;
     document.getElementById('autoWhatsappBtn').disabled = true;
-    updateWhatsAppTooltip();
+    
+    // Hide validation text when buttons are disabled (no message generated)
+    document.getElementById('whatsappValidation').style.display = 'none';
 }
 
-// Update WhatsApp button tooltip
-function updateWhatsAppTooltip() {
+// Update WhatsApp button state and validation
+function updateWhatsAppValidation() {
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const output = document.getElementById('output');
     const whatsappBtn = document.getElementById('autoWhatsappBtn');
+    const whatsappValidation = document.getElementById('whatsappValidation');
     
-    if (!phoneNumber) {
-        whatsappBtn.title = "Enter mobile number to send via WhatsApp";
-        whatsappBtn.setAttribute('data-tooltip', 'Enter mobile number to send via WhatsApp');
+    // Only show validation if there's a message generated but no phone number
+    if (output.textContent && !phoneNumber) {
+        whatsappBtn.disabled = true;
+        whatsappValidation.style.display = 'block';
+    } else if (output.textContent && phoneNumber) {
+        whatsappBtn.disabled = false;
+        whatsappValidation.style.display = 'none';
     } else {
-        whatsappBtn.title = "Send message directly to WhatsApp";
-        whatsappBtn.setAttribute('data-tooltip', 'Send message directly to WhatsApp');
+        whatsappBtn.disabled = true;
+        whatsappValidation.style.display = 'none';
     }
 }
 

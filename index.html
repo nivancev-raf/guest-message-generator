@@ -65,7 +65,7 @@
     
     <div class="form-group">
         <label for="reservationPrice" class="required-label">Reservation Price</label>
-        <input type="text" id="reservationPrice" placeholder="e.g., €120 per night" oninput="clearValidation()">
+        <input type="text" id="reservationPrice" placeholder="e.g., 560€ total price" oninput="clearValidation()">
     </div>
     
     <div class="form-group">
@@ -77,12 +77,12 @@
     </div>
     
     <div class="form-group">
-        <label class="form-label">Language / Jezik</label>
+        <label class="form-label">Message Language</label>
         <div class="radio-group">
             <label class="radio-container">
                 <input type="radio" name="language" value="sr" checked>
                 <span class="radio-checkmark"></span>
-                Srpski
+                Serbian
             </label>
             <label class="radio-container">
                 <input type="radio" name="language" value="en">
@@ -102,7 +102,12 @@
         
         <div class="button-row">
             <button id="copyBtn" onclick="copyToClipboard()" class="copy-btn" disabled>Copy to Clipboard</button>
-            <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled title="Enter mobile number to send via WhatsApp" data-tooltip="Enter mobile number to send via WhatsApp">Send via WhatsApp</button>
+            <div class="whatsapp-container">
+                <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled>Send via WhatsApp</button>
+                <div id="whatsappValidation" class="whatsapp-validation" style="display: none;">
+                    📱 Phone number required for WhatsApp
+                </div>
+            </div>
         </div>
     </div>
     

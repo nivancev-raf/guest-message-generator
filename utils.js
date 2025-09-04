@@ -47,7 +47,7 @@ function generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, price
 
 // Generate English message
 function generateEnglishMessage(guestName, checkInFormatted, checkOutFormatted, apartmentInfo, price, askForDrive = true) {
-    const priceText = price ? `\n*The total price for your stay is ${price}.€*` : '';
+    const priceText = price ? `\n*The total price for your stay is ${price}€.*` : '';
     
     // Determine garage entrance based on building
     const garageEntrance = apartmentInfo.building === "Parkview building" 
@@ -99,7 +99,7 @@ We look forward to your arrival and wish you a pleasant stay.`;
 
 // Generate Serbian message
 function generateSerbianMessage(guestName, checkInFormatted, checkOutFormatted, apartmentInfo, price, askForDrive = true) {
-    const priceText = price ? `\n*Ukupna cena za vaš boravak je ${price}.€*` : '';
+    const priceText = price ? `\n*Ukupna cena za vaš boravak je ${price}€.*` : '';
 
     const garageEntrance = apartmentInfo.building === "Parkview building" 
         ? "pored hemijskog čišćenja Maslačak" 

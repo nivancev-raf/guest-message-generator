@@ -390,33 +390,31 @@ button:disabled {
     position: relative;
 }
 
-/* Tooltip styles */
-.whatsapp-auto-btn[data-tooltip]:disabled:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #2c3e50;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 5px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+.whatsapp-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
 }
 
-.whatsapp-auto-btn[data-tooltip]:disabled:hover::before {
-    content: "";
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: #2c3e50;
-    z-index: 1000;
+.whatsapp-validation {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-align: center;
+    min-width: 140px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* UI Components */
@@ -596,6 +594,18 @@ h1 {
     .radio-checkmark:after {
         width: 10px;
         height: 10px;
+    }
+    
+    .whatsapp-container {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .whatsapp-validation {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 13px;
+        padding: 8px 10px;
     }
     
     #output {
