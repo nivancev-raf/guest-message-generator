@@ -76,13 +76,34 @@
         </label>
     </div>
     
+    <div class="form-group">
+        <label class="form-label">Language / Jezik</label>
+        <div class="radio-group">
+            <label class="radio-container">
+                <input type="radio" name="language" value="sr" checked>
+                <span class="radio-checkmark"></span>
+                Srpski
+            </label>
+            <label class="radio-container">
+                <input type="radio" name="language" value="en">
+                <span class="radio-checkmark"></span>
+                English
+            </label>
+        </div>
+    </div>
+    
     <div id="errorMessage" class="error-message" style="display: none;"></div>
     
     <div class="button-group">
-        <button id="generateEnBtn" onclick="generateMessage('en')" class="generate-btn">Generate Message (English)</button>
-        <button id="generateSrBtn" onclick="generateMessage('sr')" class="generate-btn">Generate Message (Serbian)</button>
-        <button id="copyBtn" onclick="copyToClipboard()" class="copy-btn" disabled>Copy to Clipboard</button>
-        <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled>Auto-Send WhatsApp</button>
+        <div class="button-row">
+            <button id="generateMessageBtn" onclick="generateMessage()" class="generate-btn" disabled>Generate Message</button>
+            <button id="generateGarageBtn" onclick="generateGarageInfo()" class="garage-btn" disabled>Generate Garage Info</button>
+        </div>
+        
+        <div class="button-row">
+            <button id="copyBtn" onclick="copyToClipboard()" class="copy-btn" disabled>Copy to Clipboard</button>
+            <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled title="Enter mobile number to send via WhatsApp" data-tooltip="Enter mobile number to send via WhatsApp">Send via WhatsApp</button>
+        </div>
     </div>
     
     <div id="output"></div>

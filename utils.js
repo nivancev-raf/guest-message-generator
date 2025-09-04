@@ -147,6 +147,40 @@ Ključevi će vas čekati na recepciji na vaše ime.
 Plaćanje se vrši u gotovini, a po vašem dolasku ćemo se dogovoriti
 o najpovoljnijem vremenu za preuzimanje uplate.
 
-Radujemo se vašem dolasku i želimo vam prijatan boravak.`;
+        Radujemo se vašem dolasku i želimo vam prijatan boravak.`;
     }
+}
+
+// Generate garage info message in English
+function generateGarageInfoEnglish(apartmentInfo) {
+    const garageEntrance = apartmentInfo.building === "Parkview building" 
+        ? "next to Maslačak dry cleaning" 
+        : "next to Kaldi restaurant";
+    
+    return `🅿️ *Parking Information*
+
+*Garage entrance* is located ${garageEntrance}.
+*Parking fee:* 10€ per day.
+
+At the ramp, use the intercom and provide apartment number *${apartmentInfo.apartment}*,
+parking space number *${apartmentInfo.parking}* on level *${apartmentInfo.level}* and mention that it's for *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua building' : 'Parkview building'}*.
+
+After picking up the keys at reception, you will also receive a garage card that allows you to enter without needing to use the intercom.`;
+}
+
+// Generate garage info message in Serbian
+function generateGarageInfoSerbian(apartmentInfo) {
+    const garageEntrance = apartmentInfo.building === "Parkview building" 
+        ? "pored hemijskog čišćenja Maslačak" 
+        : "pored restorana Kaldi";
+    
+    return `🅿️ *Informacije o parkingu*
+
+*Ulaz u garažu* se nalazi ${garageEntrance}.
+*Cena parkinga:* 10€ po danu.
+
+Na rampi se javite preko interfona i navedete broj apartmana *${apartmentInfo.apartment}*,
+broj parking mesta *${apartmentInfo.parking}* na nivou *${apartmentInfo.level}* kao i da se radi o *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua zgradi' : 'Parkview zgradi'}*.
+
+Nakon toga, po preuzimanju ključa na recepciji, dobićete i karticu za garažu pomoću koje možete ulaziti bez potrebe da zvonite na interfon.`;
 }

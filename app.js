@@ -23,6 +23,7 @@ function updateApartmentInfo() {
 function clearValidation() {
     document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
     document.getElementById('errorMessage').style.display = 'none';
+    updateButtonStates();
 }
 
 // Validate form inputs
@@ -94,11 +95,12 @@ function validateForm() {
 }
 
 // Generate message based on form inputs
-function generateMessage(language = 'en') {
+function generateMessage() {
     if (!validateForm()) {
         return;
     }
     
+    const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
     const selectedApartment = document.getElementById('apartmentSelect').value;
     const guestName = document.getElementById('guestName').value.trim();
     const checkIn = document.getElementById('checkIn').value;
@@ -107,13 +109,10 @@ function generateMessage(language = 'en') {
     const askForDrive = document.getElementById('askForDrive').checked;
     
     const apartmentInfo = apartmentData[selectedApartment];
-    const message = generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, reservationPrice, language, askForDrive);
+    const message = generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, reservationPrice, selectedLanguage, askForDrive);
     
     document.getElementById('output').textContent = message;
-    
-    // Enable action buttons
-    document.getElementById('copyBtn').disabled = false;
-    document.getElementById('autoWhatsappBtn').disabled = false;
+    enableActionButtons();
 }
 
 // Copy generated message to clipboard
@@ -128,10 +127,18 @@ function copyToClipboard() {
 
 // Auto-send message via WhatsApp (redirects current tab)
 function autoSendToWhatsApp() {
-    const phoneNumber = document.getElementById('phoneNumber').value;
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
     const output = document.getElementById('output');
     
-    if (!output.textContent) return;
+    if (!phoneNumber) {
+        showErrorMessage('Please enter a mobile number to send via WhatsApp.');
+        return;
+    }
+    
+    if (!output.textContent) {
+        showErrorMessage('Please generate a message first.');
+        return;
+    }
     
     const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
     const encodedMessage = encodeURIComponent(output.textContent);
@@ -140,7 +147,129 @@ function autoSendToWhatsApp() {
     window.location.href = whatsappURL;
 }
 
+// Generate garage info message
+function generateGarageInfo() {
+    const apartmentSelect = document.getElementById('apartmentSelect');
+    const output = document.getElementById('output');
+    
+    if (!apartmentSelect.value) {
+        showErrorMessage('Please select an apartment first.');
+        return;
+    }
+    
+    const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
+    const apartmentInfo = apartmentData[apartmentSelect.value];
+    let message;
+    
+    if (selectedLanguage === 'sr') {
+        message = generateGarageInfoSerbian(apartmentInfo);
+    } else {
+        message = generateGarageInfoEnglish(apartmentInfo);
+    }
+    
+    output.textContent = message;
+    enableActionButtons();
+}
+
+// Clear all form fields
+function clearAllFields() {
+    document.getElementById('apartmentSelect').value = '';
+    document.getElementById('guestName').value = '';
+    document.getElementById('phoneNumber').value = '';
+    document.getElementById('checkIn').value = '';
+    document.getElementById('checkOut').value = '';
+    document.getElementById('reservationPrice').value = '';
+    document.getElementById('askForDrive').checked = true;
+    
+    // Hide apartment info
+    document.getElementById('apartmentInfo').style.display = 'none';
+    
+    // Clear validation and output
+    clearValidation();
+    document.getElementById('output').textContent = '';
+    disableActionButtons();
+}
+
+// Update button states based on form completion
+function updateButtonStates() {
+    const apartment = document.getElementById('apartmentSelect').value;
+    const guestName = document.getElementById('guestName').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const checkIn = document.getElementById('checkIn').value;
+    const checkOut = document.getElementById('checkOut').value;
+    const price = document.getElementById('reservationPrice').value.trim();
+    
+    // Enable garage button when apartment is selected
+    const garageButton = document.getElementById('generateGarageBtn');
+    garageButton.disabled = !apartment;
+    
+    // Enable message generation button only when all fields are filled
+    const allFieldsFilled = apartment && guestName && phoneNumber && checkIn && checkOut && price;
+    const messageButton = document.getElementById('generateMessageBtn');
+    messageButton.disabled = !allFieldsFilled;
+    
+    // Update WhatsApp button state and tooltip
+    updateWhatsAppTooltip();
+}
+
+// Enable action buttons (copy, whatsapp)
+function enableActionButtons() {
+    document.getElementById('copyBtn').disabled = false;
+    
+    // Enable WhatsApp button only if phone number is provided
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const whatsappBtn = document.getElementById('autoWhatsappBtn');
+    whatsappBtn.disabled = !phoneNumber;
+    
+    // Update tooltip based on phone number
+    updateWhatsAppTooltip();
+}
+
+// Disable action buttons
+function disableActionButtons() {
+    document.getElementById('copyBtn').disabled = true;
+    document.getElementById('autoWhatsappBtn').disabled = true;
+    updateWhatsAppTooltip();
+}
+
+// Update WhatsApp button tooltip
+function updateWhatsAppTooltip() {
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const whatsappBtn = document.getElementById('autoWhatsappBtn');
+    
+    if (!phoneNumber) {
+        whatsappBtn.title = "Enter mobile number to send via WhatsApp";
+        whatsappBtn.setAttribute('data-tooltip', 'Enter mobile number to send via WhatsApp');
+    } else {
+        whatsappBtn.title = "Send message directly to WhatsApp";
+        whatsappBtn.setAttribute('data-tooltip', 'Send message directly to WhatsApp');
+    }
+}
+
+// Show error message
+function showErrorMessage(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializePWA();
+    
+    // Add event listeners to form inputs for real-time button state updates
+    const formInputs = document.querySelectorAll('#apartmentSelect, #guestName, #phoneNumber, #checkIn, #checkOut, #reservationPrice');
+    formInputs.forEach(input => {
+        input.addEventListener('input', updateButtonStates);
+        input.addEventListener('change', updateButtonStates);
+    });
+    
+    // Add event listeners to language radio buttons
+    const languageRadios = document.querySelectorAll('input[name="language"]');
+    languageRadios.forEach(radio => {
+        radio.addEventListener('change', updateButtonStates);
+    });
+    
+    // Initial button state update
+    updateButtonStates();
 });
