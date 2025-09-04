@@ -47,7 +47,12 @@ function generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, price
 
 // Generate English message
 function generateEnglishMessage(guestName, checkInFormatted, checkOutFormatted, apartmentInfo, price, askForDrive = true) {
-    const priceText = price ? `\n*The total price for your stay is ${price}.*` : '';
+    const priceText = price ? `\n*The total price for your stay is ${price}.€*` : '';
+    
+    // Determine garage entrance based on building
+    const garageEntrance = apartmentInfo.building === "Parkview building" 
+        ? "next to Maslačak dry cleaning" 
+        : "next to Kaldi restaurant";
     
     if (askForDrive) {
         // Original message with drive option
@@ -57,9 +62,11 @@ Thank you for your reservation and for choosing our apartment.
 Your stay is confirmed from *${checkInFormatted}* to *${checkOutFormatted}*.${priceText}
 The address is *${apartmentInfo.address}*, *${apartmentInfo.building}*.
 
-If you are *arriving by car*, the garage entrance is located next to Kaldi restaurant.
-At the ramp, you need to ring the intercom and mention apartment number *${apartmentInfo.apartment}*,
-parking space number *${apartmentInfo.parking}* on level *${apartmentInfo.level}*, and that it's the *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua building' : 'Parkview building'}*.
+Check-in is from *15:00*, and check-out until *11:00*.
+The reception in the building is open from *9:00 a.m.* to *9:00 p.m.*.
+
+If you are *arriving by car*, the garage entrance is located ${garageEntrance}.
+*The garage is charged 10€ per day.*
 
 The keys will be waiting for you at the reception under your name.
 Payment is made in cash, and upon your arrival we will arrange
@@ -79,9 +86,8 @@ Thank you for your reservation and for choosing our apartment.
 Your stay is confirmed from *${checkInFormatted}* to *${checkOutFormatted}*.${priceText}
 The address is *${apartmentInfo.address}*, *${apartmentInfo.building}*.
 
-The garage entrance is located next to Kaldi restaurant.
-At the ramp, you need to ring the intercom and mention apartment number *${apartmentInfo.apartment}*,
-parking space number *${apartmentInfo.parking}* on level *${apartmentInfo.level}*, and that it's the *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua building' : 'Parkview building'}*.
+The garage entrance is located ${garageEntrance}.
+*The garage is charged 10€ per day.*
 
 The keys will be waiting for you at the reception under your name.
 Payment is made in cash, and upon your arrival we will arrange
@@ -93,7 +99,11 @@ We look forward to your arrival and wish you a pleasant stay.`;
 
 // Generate Serbian message
 function generateSerbianMessage(guestName, checkInFormatted, checkOutFormatted, apartmentInfo, price, askForDrive = true) {
-    const priceText = price ? `\n*Ukupna cena za vaš boravak je ${price}.*` : '';
+    const priceText = price ? `\n*Ukupna cena za vaš boravak je ${price}.€*` : '';
+
+    const garageEntrance = apartmentInfo.building === "Parkview building" 
+        ? "pored hemijskog čišćenja Maslačak" 
+        : "pored restorana Kaldi";
 
     if (askForDrive) {
         // Original message with drive option
@@ -103,9 +113,11 @@ Hvala vam na rezervaciji i što ste izabrali naš apartman.
 Vaš boravak je potvrđen od *${checkInFormatted}* do *${checkOutFormatted}*.${priceText}
 Adresa je *${apartmentInfo.address}*, *${apartmentInfo.building}*.
 
-Ako *dolazite automobilom*, ulaz u garažu se nalazi pored restorana Kaldi.
-Na rampi treba da se javite preko interfona i spomenete broj apartmana *${apartmentInfo.apartment}*,
-broj parking mesta *${apartmentInfo.parking}* na nivou *${apartmentInfo.level}*, i da se radi o *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua zgradi' : 'Parkview zgradi'}*.
+Check-in je od *15:00h*, a check-out do *11:00h*.
+Recepcija u zgradi radi od *9:00h* do *21:00h*.
+
+Ako *dolazite automobilom*, ulaz u garažu se nalazi ${garageEntrance}.
+*Garaža se naplaćuje 10€ po danu.*
 
 Ključevi će vas čekati na recepciji na vaše ime.
 Plaćanje se vrši u gotovini, a po vašem dolasku ćemo se dogovoriti
@@ -125,9 +137,11 @@ Hvala vam na rezervaciji i što ste izabrali naš apartman.
 Vaš boravak je potvrđen od *${checkInFormatted}* do *${checkOutFormatted}*.${priceText}
 Adresa je *${apartmentInfo.address}*, *${apartmentInfo.building}*.
 
-Ulaz u garažu se nalazi pored restorana Kaldi.
-Na rampi treba da se javite preko interfona i spomenete broj apartmana *${apartmentInfo.apartment}*,
-broj parking mesta *${apartmentInfo.parking}* na nivou *${apartmentInfo.level}*, i da se radi o *${apartmentInfo.building === 'BW Aqua building' ? 'Aqua zgradi' : 'Parkview zgradi'}*.
+Check-in je od *15:00h*, a check-out do *11:00h*.
+Recepcija u zgradi radi od *9:00h* do *21:00h*.
+
+Ulaz u garažu se nalazi ${garageEntrance}.
+*Garaža se naplaćuje 10€ po danu.*
 
 Ključevi će vas čekati na recepciji na vaše ime.
 Plaćanje se vrši u gotovini, a po vašem dolasku ćemo se dogovoriti

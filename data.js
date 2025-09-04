@@ -24,8 +24,8 @@ const apartmentData = {
     parkview2110: {
         building: "Parkview building",
         apartment: "2110",
-        parking: "22",
-        level: "-1",
+        parking: "450",
+        level: "-2",
         address: "Bulevar Vudroa Vilsona 8"
     }
 };
