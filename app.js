@@ -1,22 +1,170 @@
 // Main application logic
 
+// Loaded after login
+let currentUser = null;
+let currentProfile = null;
+let apartments = [];
+
+function getApartmentById(id) {
+    return apartments.find(apartment => apartment.id === id) || null;
+}
+
+function getSelectedApartment() {
+    return getApartmentById(document.getElementById('apartmentSelect').value);
+}
+
+// Show one of the screens: 'loading', 'login' or 'app'
+function showScreen(name) {
+    document.getElementById('loadingScreen').style.display = name === 'loading' ? 'flex' : 'none';
+    document.getElementById('loginScreen').style.display = name === 'login' ? 'block' : 'none';
+    document.getElementById('appScreen').style.display = name === 'app' ? 'block' : 'none';
+}
+
+function isSupabaseConfigured() {
+    return !SUPABASE_URL.includes('YOUR-PROJECT-REF') && !SUPABASE_ANON_KEY.includes('YOUR-ANON');
+}
+
+// Handle login form submit
+async function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const loginError = document.getElementById('loginError');
+    const loginBtn = document.getElementById('loginBtn');
+
+    loginError.style.display = 'none';
+    if (!email || !password) {
+        loginError.textContent = 'Please enter email and password.';
+        loginError.style.display = 'block';
+        return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Logging in...';
+    try {
+        const session = await signIn(email, password);
+        document.getElementById('loginPassword').value = '';
+        await enterApp(session);
+    } catch (error) {
+        loginError.textContent = error && error.message === 'Invalid login credentials'
+            ? 'Wrong email or password.'
+            : 'Login failed. Check your internet connection and try again.';
+        loginError.style.display = 'block';
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Log in';
+    }
+}
+
+async function handleLogout() {
+    try {
+        await signOut();
+    } catch (error) {
+        console.error('Logout failed', error);
+    }
+    resetAppState();
+    showScreen('login');
+}
+
+function resetAppState() {
+    currentUser = null;
+    currentProfile = null;
+    apartments = [];
+    populateApartmentSelect();
+    clearAllFields();
+}
+
+// Load profile + apartments and show the main screen
+async function enterApp(session) {
+    currentUser = session.user;
+    showScreen('app');
+    await loadUserData();
+}
+
+async function loadUserData() {
+    const loadError = document.getElementById('loadError');
+    loadError.style.display = 'none';
+    try {
+        const [profile, apartmentList] = await Promise.all([
+            fetchProfile(currentUser.id),
+            fetchApartments()
+        ]);
+        currentProfile = profile;
+        apartments = apartmentList;
+    } catch (error) {
+        console.error('Loading data failed', error);
+        document.getElementById('loadErrorText').textContent = 'Could not load your apartments. Check your internet connection.';
+        loadError.style.display = 'flex';
+    }
+
+    const name = (currentProfile && currentProfile.display_name) || currentUser.email.split('@')[0];
+    document.getElementById('greeting').textContent = `Hello ${name}!`;
+
+    populateApartmentSelect();
+    selectDefaultApartment();
+}
+
+// Fill the apartment dropdown with the user's apartments
+function populateApartmentSelect() {
+    const select = document.getElementById('apartmentSelect');
+    select.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Choose apartment...';
+    select.appendChild(placeholder);
+
+    apartments.forEach(apartment => {
+        const option = document.createElement('option');
+        option.value = apartment.id;
+        option.textContent = apartment.name;
+        select.appendChild(option);
+    });
+}
+
+// Default apartment: the one from the profile, or the only one the user has
+function getDefaultApartmentId() {
+    if (currentProfile && currentProfile.default_apartment_id && getApartmentById(currentProfile.default_apartment_id)) {
+        return currentProfile.default_apartment_id;
+    }
+    return apartments.length === 1 ? apartments[0].id : '';
+}
+
+function selectDefaultApartment() {
+    document.getElementById('apartmentSelect').value = getDefaultApartmentId();
+    updateApartmentInfo();
+    updateButtonStates();
+}
+
 // Update apartment information display
 function updateApartmentInfo() {
-    const selectedApartment = document.getElementById('apartmentSelect').value;
+    const apartment = getSelectedApartment();
     const infoDiv = document.getElementById('apartmentInfo');
-    
-    if (selectedApartment && apartmentData[selectedApartment]) {
-        const data = apartmentData[selectedApartment];
-        infoDiv.innerHTML = `
-            <strong>Address:</strong> ${data.address}<br>
-            <strong>Building:</strong> ${data.building}<br>
-            <strong>Apartment:</strong> ${data.apartment}<br>
-            <strong>Parking:</strong> Slot ${data.parking}, Level ${data.level}
-        `;
-        infoDiv.style.display = 'block';
-    } else {
+    infoDiv.innerHTML = '';
+
+    if (!apartment) {
         infoDiv.style.display = 'none';
+        return;
     }
+
+    const rows = [
+        ['Address', apartment.address],
+        ['Building', apartment.building],
+        ['Entrance', apartment.entrance],
+        ['Floor', apartment.floor],
+        ['Apartment', apartment.apartment_number],
+        ['Parking', apartment.parking_spot && `Slot ${apartment.parking_spot}${apartment.garage_level ? `, Level ${apartment.garage_level}` : ''}`]
+    ];
+
+    rows.filter(([, value]) => value).forEach(([label, value]) => {
+        const row = document.createElement('div');
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        row.appendChild(strong);
+        row.appendChild(document.createTextNode(value));
+        infoDiv.appendChild(row);
+    });
+    infoDiv.style.display = 'block';
 }
 
 // Clear form validation styling
@@ -101,15 +249,20 @@ function generateMessage() {
     }
     
     const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
-    const selectedApartment = document.getElementById('apartmentSelect').value;
     const guestName = document.getElementById('guestName').value.trim();
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
     const reservationPrice = document.getElementById('reservationPrice').value.trim();
     const askForDrive = document.getElementById('askForDrive').checked;
     
-    const apartmentInfo = apartmentData[selectedApartment];
-    const message = generateGuestMessage(guestName, checkIn, checkOut, apartmentInfo, reservationPrice, selectedLanguage, askForDrive);
+    const apartment = getSelectedApartment();
+    const templateKey = askForDrive ? 'reservation' : 'reservation_no_transport';
+    const message = generateFromTemplate(apartment, selectedLanguage, templateKey, {
+        guestName,
+        checkIn,
+        checkOut,
+        price: reservationPrice
+    });
     
     document.getElementById('output').textContent = message;
     enableActionButtons();
@@ -149,31 +302,22 @@ function autoSendToWhatsApp() {
 
 // Generate garage info message
 function generateGarageInfo() {
-    const apartmentSelect = document.getElementById('apartmentSelect');
     const output = document.getElementById('output');
+    const apartment = getSelectedApartment();
     
-    if (!apartmentSelect.value) {
+    if (!apartment) {
         showErrorMessage('Please select an apartment first.');
         return;
     }
     
     const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
-    const apartmentInfo = apartmentData[apartmentSelect.value];
-    let message;
-    
-    if (selectedLanguage === 'sr') {
-        message = generateGarageInfoSerbian(apartmentInfo);
-    } else {
-        message = generateGarageInfoEnglish(apartmentInfo);
-    }
-    
-    output.textContent = message;
+    output.textContent = generateFromTemplate(apartment, selectedLanguage, 'garage');
     enableActionButtons();
 }
 
 // Clear all form fields
 function clearAllFields() {
-    document.getElementById('apartmentSelect').value = '';
+    document.getElementById('apartmentSelect').value = getDefaultApartmentId();
     document.getElementById('guestName').value = '';
     document.getElementById('phoneNumber').value = '';
     document.getElementById('checkIn').value = '';
@@ -181,8 +325,7 @@ function clearAllFields() {
     document.getElementById('reservationPrice').value = '';
     document.getElementById('askForDrive').checked = true;
     
-    // Hide apartment info
-    document.getElementById('apartmentInfo').style.display = 'none';
+    updateApartmentInfo();
     
     // Clear validation and output
     clearValidation();
@@ -202,6 +345,7 @@ function updateButtonStates() {
     // Enable garage button when apartment is selected
     const garageButton = document.getElementById('generateGarageBtn');
     garageButton.disabled = !apartment;
+    document.getElementById('editTemplatesBtn').disabled = !apartment;
     
     // Enable message generation button only when all fields are filled
     const allFieldsFilled = apartment && guestName && phoneNumber && checkIn && checkOut && price;
@@ -268,7 +412,7 @@ function showErrorMessage(message) {
 }
 
 // Initialize application when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     initializePWA();
     
     // Add event listeners to form inputs for real-time button state updates
@@ -283,7 +427,42 @@ document.addEventListener('DOMContentLoaded', function() {
     languageRadios.forEach(radio => {
         radio.addEventListener('change', updateButtonStates);
     });
+
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    document.getElementById('retryLoadBtn').addEventListener('click', loadUserData);
     
     // Initial button state update
     updateButtonStates();
+
+    if (!supabaseClient || !isSupabaseConfigured()) {
+        showScreen('login');
+        const loginError = document.getElementById('loginError');
+        loginError.textContent = supabaseClient
+            ? 'The app is not configured yet (missing Supabase settings in config.js).'
+            : 'Could not connect. Check your internet connection and reopen the app.';
+        loginError.style.display = 'block';
+        document.getElementById('loginBtn').disabled = true;
+        return;
+    }
+
+    // Session expired or logged out in another tab
+    onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT' && currentUser) {
+            resetAppState();
+            showScreen('login');
+        }
+    });
+
+    try {
+        const session = await getSession();
+        if (session) {
+            await enterApp(session);
+        } else {
+            showScreen('login');
+        }
+    } catch (error) {
+        console.error('Session check failed', error);
+        showScreen('login');
+    }
 });

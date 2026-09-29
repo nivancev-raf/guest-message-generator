@@ -1,84 +1,6 @@
 /* Main Styles */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;.checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-    left: 6px;
-    top: 2px;
-    width: 5px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 3px 3px 0;
-    transform: rotate(45deg);
-}
-
-.checkbox-container input:checked ~ .checkmark:after {
-    display: block;
-}
-
-/* Radio Button Styles */
-.radio-group {
-    display: flex;
-    gap: 20px;
-    margin-top: 8px;
-}
-
-.radio-container {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    color: #2c3e50;
-    user-select: none;
-}
-
-.radio-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.radio-checkmark {
-    height: 20px;
-    width: 20px;
-    background-color: #fff;
-    border: 2px solid #bdc3c7;
-    border-radius: 50%;
-    margin-right: 12px;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.radio-container:hover input ~ .radio-checkmark {
-    border-color: #3498db;
-    background-color: #ecf0f1;
-}
-
-.radio-container input:checked ~ .radio-checkmark {
-    background-color: #3498db;
-    border-color: #3498db;
-}
-
-.radio-checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-    top: 50%;
-    left: 50%;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: white;
-    transform: translate(-50%, -50%);
-}
-
-.radio-container input:checked ~ .radio-checkmark:after {
-    display: block;
-}
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     padding: 0;
     background-color: #f8f9fa;
     color: #333;
@@ -487,6 +409,444 @@ h1 {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Radio Button Styles */
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.radio-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #2c3e50;
+    user-select: none;
+}
+
+.radio-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.radio-checkmark {
+    height: 20px;
+    width: 20px;
+    background-color: #fff;
+    border: 2px solid #bdc3c7;
+    border-radius: 50%;
+    margin-right: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.radio-container:hover input ~ .radio-checkmark {
+    border-color: #3498db;
+    background-color: #ecf0f1;
+}
+
+.radio-container input:checked ~ .radio-checkmark {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.radio-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    transform: translate(-50%, -50%);
+}
+
+.radio-container input:checked ~ .radio-checkmark:after {
+    display: block;
+}
+
+/* Loading screen */
+.loading-screen {
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e9ecef;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Login */
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.login-form label {
+    margin-top: 12px;
+}
+
+.login-form label:first-child {
+    margin-top: 0;
+}
+
+input[type="email"], input[type="password"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+input[type="email"]:focus, input[type="password"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    margin: 20px 0 0;
+}
+
+/* Greeting + logout in header */
+.user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.greeting {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+    padding: 6px 14px;
+    min-height: 36px;
+    margin: 0;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+}
+
+/* Load error with retry */
+.load-error {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 20px;
+}
+
+.retry-btn {
+    background: #dc3545;
+    box-shadow: none;
+    padding: 8px 16px;
+    min-height: 40px;
+    margin: 0;
+    font-size: 14px;
+}
+
+.retry-btn:hover {
+    background: #b02a37;
+}
+
+/* Edit messages button */
+.edit-templates-btn {
+    background: #fff;
+    color: #007bff;
+    border: 2px solid #007bff;
+    box-shadow: none;
+    padding: 8px 16px;
+    min-height: 44px;
+    margin: 12px 0 0;
+    font-size: 14px;
+}
+
+.edit-templates-btn:hover:not(:disabled) {
+    background: #e7f3ff;
+    box-shadow: none;
+}
+
+.edit-templates-btn:disabled {
+    background: #fff;
+    color: #6c757d;
+    border-color: #ced4da;
+}
+
+/* Template editor */
+body.editor-open {
+    overflow: hidden;
+}
+
+.editor-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.editor-panel {
+    background: #f8f9fa;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.editor-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+.editor-close {
+    background: transparent;
+    color: #495057;
+    box-shadow: none;
+    padding: 0;
+    width: 44px;
+    min-height: 44px;
+    margin: 0;
+    font-size: 20px;
+}
+
+.editor-close:hover {
+    background: #e9ecef;
+    box-shadow: none;
+    transform: none;
+}
+
+.editor-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.editor-tab {
+    flex: 1;
+    background: #fff;
+    color: #007bff;
+    border: 2px solid #007bff;
+    box-shadow: none;
+    margin: 0;
+    min-height: 44px;
+    padding: 8px 16px;
+}
+
+.editor-tab.active {
+    background: #007bff;
+    color: #fff;
+}
+
+.editor-tab:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+.editor-tab:not(.active):hover {
+    background: #e7f3ff;
+}
+
+.editor-placeholders {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.editor-hint {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.placeholder-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.placeholder-chip {
+    background: #e7f3ff;
+    color: #0056b3;
+    border: 1px solid #b8daff;
+    box-shadow: none;
+    padding: 4px 10px;
+    min-height: 32px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: ui-monospace, Menlo, monospace;
+    border-radius: 16px;
+}
+
+.placeholder-chip:hover {
+    background: #cce5ff;
+    box-shadow: none;
+    transform: none;
+}
+
+.editor-field {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.editor-field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.editor-field-header label {
+    margin: 0;
+}
+
+.editor-reset-btn {
+    background: transparent;
+    color: #6c757d;
+    box-shadow: none;
+    padding: 4px 8px;
+    min-height: 32px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.editor-reset-btn:hover {
+    background: #f1f3f5;
+    box-shadow: none;
+    transform: none;
+}
+
+.editor-field textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    font-family: inherit;
+    line-height: 1.5;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.editor-field textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.editor-status {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.editor-status.error {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.editor-status.info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: #f8f9fa;
+    padding-top: 8px;
+}
+
+.editor-actions button {
+    flex: 1;
+    margin: 0;
+}
+
+.editor-cancel-btn {
+    background: #fff;
+    color: #495057;
+    border: 2px solid #ced4da;
+    box-shadow: none;
+}
+
+.editor-cancel-btn:hover {
+    background: #f1f3f5;
+    box-shadow: none;
+}
+
+.editor-save-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+}
+
+.editor-save-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #229954, #27ae60);
+}
+
 /* Mobile Responsive Design */
 @media (max-width: 600px) {
     .container {
@@ -617,5 +977,32 @@ h1 {
     .apartment-info {
         padding: 12px;
         font-size: 12px;
+    }
+
+    input[type="email"], input[type="password"] {
+        padding: 16px;
+    }
+
+    .greeting {
+        font-size: 16px;
+    }
+
+    .edit-templates-btn {
+        width: 100%;
+    }
+
+    .editor-overlay {
+        padding: 0;
+    }
+
+    .editor-panel {
+        border-radius: 0;
+        min-height: 100%;
+        padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+        padding-top: calc(16px + env(safe-area-inset-top));
+    }
+
+    .editor-field {
+        padding: 12px;
     }
 }

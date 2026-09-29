@@ -23,22 +23,54 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Loading screen (shown while the session is being checked) -->
+    <div id="loadingScreen" class="screen loading-screen">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Login screen -->
+    <div id="loginScreen" class="screen container" style="display: none;">
         <div class="header">
             <img src="icon-192.png" alt="Guest Message Generator" class="logo">
             <h1>Guest Message Generator</h1>
         </div>
+
+        <form id="loginForm" class="form-group login-form" novalidate>
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
+
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Password" required>
+
+            <div id="loginError" class="error-message" style="display: none;"></div>
+
+            <button type="submit" id="loginBtn" class="login-btn">Log in</button>
+        </form>
+    </div>
+
+    <!-- Main application -->
+    <div id="appScreen" class="screen container" style="display: none;">
+        <div class="header">
+            <img src="icon-192.png" alt="Guest Message Generator" class="logo">
+            <h1>Guest Message Generator</h1>
+            <div class="user-bar">
+                <span id="greeting" class="greeting"></span>
+                <button type="button" id="logoutBtn" class="logout-btn">Log out</button>
+            </div>
+        </div>
+
+    <div id="loadError" class="error-message load-error" style="display: none;">
+        <span id="loadErrorText"></span>
+        <button type="button" id="retryLoadBtn" class="retry-btn">Retry</button>
+    </div>
     
     <div class="form-group">
         <label for="apartmentSelect" class="required-label">Select Apartment</label>
         <select id="apartmentSelect" onchange="updateApartmentInfo(); clearValidation();">
             <option value="">Choose apartment...</option>
-            <option value="aqua2108">Aqua 2108</option>
-            <option value="aqua706">Aqua 706</option>
-            <option value="aqua707">Aqua 707</option>
-            <option value="parkview2110">Parkview 2110</option>
         </select>
         <div id="apartmentInfo" class="apartment-info" style="display: none;"></div>
+        <button type="button" id="editTemplatesBtn" class="edit-templates-btn" onclick="openTemplateEditor()" disabled>✏️ Edit messages</button>
     </div>
     
     <div class="form-group">
@@ -113,12 +145,46 @@
     
     <div id="output"></div>
 
-    </div> <!-- end container -->
+    </div> <!-- end app container -->
+
+    <!-- Message template editor -->
+    <div id="templateEditor" class="editor-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+        <div class="editor-panel">
+            <div class="editor-header">
+                <h2 id="editorTitle">Edit messages</h2>
+                <button type="button" class="editor-close" onclick="closeTemplateEditor()" aria-label="Close">✕</button>
+            </div>
+
+            <div class="editor-tabs" role="tablist">
+                <button type="button" class="editor-tab active" data-lang="sr" onclick="switchEditorLanguage('sr')">Serbian</button>
+                <button type="button" class="editor-tab" data-lang="en" onclick="switchEditorLanguage('en')">English</button>
+            </div>
+
+            <div class="editor-placeholders">
+                <div class="editor-hint">Tap a placeholder to insert it into the selected message:</div>
+                <div id="placeholderChips" class="placeholder-chips"></div>
+            </div>
+
+            <div id="editorFields"></div>
+
+            <div id="editorStatus" class="editor-status" style="display: none;"></div>
+
+            <div class="editor-actions">
+                <button type="button" class="editor-cancel-btn" onclick="closeTemplateEditor()">Cancel</button>
+                <button type="button" id="saveTemplatesBtn" class="editor-save-btn" onclick="saveTemplates()">Save</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
-    <script src="data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <script src="utils.js"></script>
+    <script src="templates.js"></script>
+    <script src="auth.js"></script>
+    <script src="api.js"></script>
     <script src="pwa.js"></script>
+    <script src="editor.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
