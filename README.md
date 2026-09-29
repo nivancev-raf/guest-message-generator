@@ -22,7 +22,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 2. **Authentication → Sign In / Providers → Email**: disable *Allow new users to sign up* and *Confirm email*
 3. **Authentication → Users → Add user**: create one user per person (email + password, auto confirm)
 4. **SQL Editor**: run [`supabase/schema.sql`](supabase/schema.sql), then insert profiles and apartments (the data script is kept outside of the repository)
-5. **Project Settings → API**: put the Project URL and the `anon` public key into `config.js` (both are public by design; data is protected by login + RLS)
+5. **Project Settings → API**: put the API URL and the **Publishable key** (or the legacy `anon` key) into `config.js` — never the secret key (both are public by design; data is protected by login + RLS)
 6. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can ping the database every 3 days (free Supabase projects are paused after 7 days of inactivity)
 
 > Never commit apartment details, emails or passwords to this repository.

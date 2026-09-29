@@ -23,7 +23,6 @@ jobs:
           fi
           curl --fail --silent --show-error \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             "$SUPABASE_URL/rest/v1/apartments?select=id&limit=1"
           echo
           echo "Supabase ping OK"
