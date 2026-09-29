@@ -67,6 +67,8 @@ async function handleLogout() {
 }
 
 function resetAppState() {
+    closeMenu();
+    showView('generator', { force: true });
     currentUser = null;
     currentProfile = null;
     apartments = [];
@@ -97,11 +99,16 @@ async function loadUserData() {
         loadError.style.display = 'flex';
     }
 
-    const name = (currentProfile && currentProfile.display_name) || currentUser.email.split('@')[0];
-    document.getElementById('greeting').textContent = `Hello ${name}!`;
+    updateGreeting();
 
     populateApartmentSelect();
     selectDefaultApartment();
+}
+
+function updateGreeting() {
+    const name = (currentProfile && currentProfile.display_name) || currentUser.email.split('@')[0];
+    document.getElementById('greeting').textContent = `Hello ${name}!`;
+    document.getElementById('menuUserEmail').textContent = currentUser.email;
 }
 
 // Fill the apartment dropdown with the user's apartments
@@ -429,7 +436,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    initMenu();
+    initApartments();
+    initMessagesEditor();
+    initProfile();
     document.getElementById('retryLoadBtn').addEventListener('click', loadUserData);
     
     // Initial button state update

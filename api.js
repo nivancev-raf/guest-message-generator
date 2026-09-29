@@ -13,6 +13,18 @@ async function fetchProfile(userId) {
     return data;
 }
 
+// Update the logged in user's profile (e.g. display name)
+async function updateProfile(userId, changes) {
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .update(changes)
+        .eq('id', userId)
+        .select('id, display_name, default_apartment_id')
+        .single();
+    if (error) throw error;
+    return data;
+}
+
 // Apartments of the logged in user (RLS returns only their own)
 async function fetchApartments() {
     const { data, error } = await supabaseClient
@@ -36,7 +48,7 @@ async function updateApartmentTemplates(apartmentId, templates) {
     return data;
 }
 
-// --- Prepared for future apartment management (not used in the UI yet) ---
+// --- Apartment management ---
 
 async function createApartment(apartment) {
     const { data, error } = await supabaseClient

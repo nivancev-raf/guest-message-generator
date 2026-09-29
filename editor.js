@@ -1,19 +1,67 @@
-// Message template editor (per apartment, per language)
+// "Edit messages" view: one template at a time, chosen by apartment + language + message type
 
 const EDITOR_LANGUAGES = ['sr', 'en'];
 
 let editorApartmentId = null;
-let editorLanguage = 'sr';
-let editorDraft = null;         // { sr: { reservation: '...', ... }, en: { ... } }
+let editorDraft = null;         // { sr: { reservation: '...', ... }, en: { ... } } for the chosen apartment
 let editorInitialDraft = null;  // snapshot used to detect unsaved changes
-let editorActiveTextarea = null;
 
-// Open the editor for the selected apartment
-function openTemplateEditor() {
+function getEditorLanguage() {
+    return document.querySelector('input[name="msgLanguage"]:checked').value;
+}
+
+function getEditorType() {
+    return document.querySelector('input[name="msgType"]:checked').value;
+}
+
+// Shortcut from the generator: open the view for the selected apartment and language
+function openMessagesView() {
     const apartment = getSelectedApartment();
-    if (!apartment) return;
+    const language = document.querySelector('input[name="language"]:checked').value;
+    showView('messages', { apartmentId: apartment && apartment.id, language });
+}
 
-    editorApartmentId = apartment.id;
+function enterMessagesView(options = {}) {
+    if (options.language) {
+        document.querySelector(`input[name="msgLanguage"][value="${options.language}"]`).checked = true;
+    }
+
+    const select = document.getElementById('msgApartment');
+    select.innerHTML = '';
+    apartments.forEach(apartment => {
+        const option = document.createElement('option');
+        option.value = apartment.id;
+        option.textContent = apartment.name;
+        select.appendChild(option);
+    });
+
+    const hasApartments = apartments.length > 0;
+    ['msgApartment', 'msgTemplate', 'msgResetBtn', 'saveMessagesBtn'].forEach(id => {
+        document.getElementById(id).disabled = !hasApartments;
+    });
+    setEditorStatus(hasApartments ? '' : 'Add an apartment first (Menu → Add apartment).', 'info');
+
+    renderPlaceholderChips();
+
+    const preferredId = options.apartmentId || editorApartmentId || getDefaultApartmentId();
+    const apartmentId = getApartmentById(preferredId) ? preferredId : (hasApartments ? apartments[0].id : null);
+    loadEditorApartment(apartmentId);
+}
+
+// Load all templates of an apartment into the draft
+function loadEditorApartment(apartmentId) {
+    const apartment = getApartmentById(apartmentId);
+    editorApartmentId = apartment ? apartment.id : null;
+    document.getElementById('msgApartment').value = editorApartmentId || '';
+
+    if (!apartment) {
+        editorDraft = null;
+        editorInitialDraft = null;
+        document.getElementById('msgTemplate').value = '';
+        document.getElementById('msgTemplateBadge').textContent = '';
+        return;
+    }
+
     editorDraft = {};
     EDITOR_LANGUAGES.forEach(language => {
         editorDraft[language] = {};
@@ -22,94 +70,49 @@ function openTemplateEditor() {
         });
     });
     editorInitialDraft = JSON.stringify(editorDraft);
-
-    document.getElementById('editorTitle').textContent = `Edit messages – ${apartment.name}`;
-    setEditorStatus('');
-    renderPlaceholderChips();
-
-    const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
-    switchEditorLanguage(selectedLanguage, false);
-
-    document.getElementById('templateEditor').style.display = 'flex';
-    document.body.classList.add('editor-open');
+    showEditorTemplate();
 }
 
-function closeTemplateEditor(force = false) {
-    if (!force && editorDraft) {
-        storeEditorFields();
-        if (JSON.stringify(editorDraft) !== editorInitialDraft && !confirm('Discard unsaved changes?')) {
-            return;
-        }
-    }
-    document.getElementById('templateEditor').style.display = 'none';
-    document.body.classList.remove('editor-open');
-    editorApartmentId = null;
-    editorDraft = null;
-    editorActiveTextarea = null;
-}
-
-// Copy textarea values into the draft for the current language
-function storeEditorFields() {
+// Put the draft of the chosen language + type into the textarea
+function showEditorTemplate() {
     if (!editorDraft) return;
-    document.querySelectorAll('#editorFields textarea').forEach(textarea => {
-        editorDraft[editorLanguage][textarea.dataset.key] = textarea.value;
-    });
+    const language = getEditorLanguage();
+    const key = getEditorType();
+    document.getElementById('msgTemplate').value = editorDraft[language][key];
+    updateTemplateBadge();
 }
 
-function switchEditorLanguage(language, storeCurrent = true) {
-    if (storeCurrent) storeEditorFields();
-    editorLanguage = language;
-
-    document.querySelectorAll('.editor-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.lang === language);
-    });
-    renderEditorFields();
+function storeEditorTemplate() {
+    if (!editorDraft) return;
+    editorDraft[getEditorLanguage()][getEditorType()] = document.getElementById('msgTemplate').value;
 }
 
-function renderEditorFields() {
-    const container = document.getElementById('editorFields');
-    container.innerHTML = '';
-    editorActiveTextarea = null;
+function updateTemplateBadge() {
+    const badge = document.getElementById('msgTemplateBadge');
+    if (!editorDraft) {
+        badge.textContent = '';
+        return;
+    }
+    const language = getEditorLanguage();
+    const key = getEditorType();
+    const isDefault = editorDraft[language][key] === DEFAULT_TEMPLATES[language][key];
+    badge.textContent = isDefault ? 'Default' : 'Custom';
+    badge.className = `template-badge ${isDefault ? 'default' : 'custom'}`;
+}
 
-    TEMPLATE_KEYS.forEach(key => {
-        const field = document.createElement('div');
-        field.className = 'editor-field';
+function hasUnsavedTemplates() {
+    if (!editorDraft) return false;
+    storeEditorTemplate();
+    return JSON.stringify(editorDraft) !== editorInitialDraft;
+}
 
-        const header = document.createElement('div');
-        header.className = 'editor-field-header';
-
-        const label = document.createElement('label');
-        label.htmlFor = `template_${key}`;
-        label.textContent = TEMPLATE_LABELS[key];
-
-        const resetBtn = document.createElement('button');
-        resetBtn.type = 'button';
-        resetBtn.className = 'editor-reset-btn';
-        resetBtn.textContent = 'Reset to default';
-
-        const textarea = document.createElement('textarea');
-        textarea.id = `template_${key}`;
-        textarea.dataset.key = key;
-        textarea.rows = key === 'garage' ? 8 : 14;
-        textarea.value = editorDraft[editorLanguage][key];
-        textarea.addEventListener('focus', () => { editorActiveTextarea = textarea; });
-
-        resetBtn.addEventListener('click', () => {
-            textarea.value = DEFAULT_TEMPLATES[editorLanguage][key];
-            editorActiveTextarea = textarea;
-        });
-
-        header.appendChild(label);
-        header.appendChild(resetBtn);
-        field.appendChild(header);
-        field.appendChild(textarea);
-        container.appendChild(field);
-    });
+function confirmDiscardTemplates() {
+    return !hasUnsavedTemplates() || confirm('You have unsaved message changes. Discard them?');
 }
 
 function renderPlaceholderChips() {
     const container = document.getElementById('placeholderChips');
-    container.innerHTML = '';
+    if (container.childElementCount > 0) return;
     TEMPLATE_PLACEHOLDERS.forEach(placeholder => {
         const chip = document.createElement('button');
         chip.type = 'button';
@@ -124,17 +127,15 @@ function renderPlaceholderChips() {
 }
 
 function insertPlaceholder(text) {
-    const textarea = editorActiveTextarea;
-    if (!textarea) {
-        setEditorStatus('Tap inside a message first, then tap a placeholder.', 'error');
-        return;
-    }
+    const textarea = document.getElementById('msgTemplate');
+    if (textarea.disabled) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
     textarea.focus();
     textarea.selectionStart = textarea.selectionEnd = start + text.length;
-    setEditorStatus('');
+    storeEditorTemplate();
+    updateTemplateBadge();
 }
 
 // Only templates that differ from the defaults are stored,
@@ -162,27 +163,71 @@ async function saveTemplates() {
     const apartment = getApartmentById(editorApartmentId);
     if (!apartment) return;
 
-    storeEditorFields();
-    const saveBtn = document.getElementById('saveTemplatesBtn');
+    storeEditorTemplate();
+    const saveBtn = document.getElementById('saveMessagesBtn');
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
 
     try {
         const updated = await updateApartmentTemplates(apartment.id, buildTemplatesToSave(apartment.templates));
         apartments = apartments.map(item => item.id === updated.id ? updated : item);
-        closeTemplateEditor(true);
+        loadEditorApartment(updated.id);
+        setEditorStatus(`Messages for ${updated.name} saved.`, 'success');
     } catch (error) {
         console.error('Saving templates failed', error);
         setEditorStatus('Saving failed. Check your internet connection and try again.', 'error');
     } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save';
+        saveBtn.textContent = 'Save messages';
     }
 }
 
 function setEditorStatus(message, type = 'info') {
-    const status = document.getElementById('editorStatus');
+    const status = document.getElementById('msgStatus');
     status.textContent = message;
     status.className = `editor-status ${type}`;
     status.style.display = message ? 'block' : 'none';
+}
+
+function initMessagesEditor() {
+    const select = document.getElementById('msgApartment');
+    select.addEventListener('change', () => {
+        if (select.value === editorApartmentId) return;
+        if (!confirmDiscardTemplates()) {
+            select.value = editorApartmentId;
+            return;
+        }
+        setEditorStatus('');
+        loadEditorApartment(select.value);
+    });
+
+    // The draft is updated on every keystroke, so switching language/type never loses text
+    const textarea = document.getElementById('msgTemplate');
+    document.querySelectorAll('input[name="msgLanguage"], input[name="msgType"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            showEditorTemplate();
+            setEditorStatus('');
+        });
+    });
+
+    textarea.addEventListener('input', () => {
+        storeEditorTemplate();
+        updateTemplateBadge();
+    });
+
+    document.getElementById('msgResetBtn').addEventListener('click', () => {
+        if (!editorDraft) return;
+        const language = getEditorLanguage();
+        const key = getEditorType();
+        textarea.value = DEFAULT_TEMPLATES[language][key];
+        storeEditorTemplate();
+        updateTemplateBadge();
+    });
+
+    document.getElementById('saveMessagesBtn').addEventListener('click', saveTemplates);
+
+    registerViewHooks('messages', {
+        enter: enterMessagesView,
+        canLeave: confirmDiscardTemplates
+    });
 }

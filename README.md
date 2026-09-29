@@ -10,7 +10,10 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 
 - **Login**: Each user logs in with email + password and stays logged in (also in the home screen app)
 - **Private apartment data**: Apartment details live in a Supabase database, never in this repository. Row Level Security makes sure every user sees only their own apartments
-- **Per-apartment messages**: Reservation and garage messages can be edited per apartment and per language, directly in the app
+- **Side menu**: Message generator, apartments (add / edit / delete), message editor, my profile, log out
+- **Apartment management**: Add, edit and delete apartments directly in the app
+- **Per-apartment messages**: Reservation and garage messages can be edited per apartment, language and message type
+- **My profile**: Change the name shown in the greeting
 - **Message Generation**: Automatically generate personalized welcome messages (Serbian / English)
 - **WhatsApp Integration**: Send messages directly via WhatsApp
 - **PWA Support**: Install as a mobile app ("Add to Home Screen")
@@ -46,7 +49,10 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ├── auth.js             # Login / logout / session (Supabase Auth)
 ├── api.js              # Data access layer (profiles, apartments)
 ├── templates.js        # Default message templates + placeholder rendering
-├── editor.js           # Per-apartment message template editor
+├── menu.js             # Side menu (hamburger) and view navigation
+├── apartments.js       # Apartment list + add / edit / delete form
+├── editor.js           # "Edit messages" view (apartment, language, message type)
+├── profile.js          # "My profile" view (display name)
 ├── app.js              # Main application logic and DOM manipulation
 ├── utils.js            # Date formatting helpers
 ├── pwa.js              # Progressive Web App functionality
@@ -65,11 +71,6 @@ Templates can use: `{{guest_name}}`, `{{check_in}}`, `{{check_out}}`, `{{price}}
 `{{address}}`, `{{building}}`, `{{apartment}}`, `{{entrance}}`, `{{floor}}`, `{{parking}}`, `{{garage_level}}`.
 Templates that are not customized fall back to the defaults in `templates.js`.
 
-## 🛠️ Adding New Apartments
-
-For now apartments are added in Supabase (**Table Editor → apartments → Insert row**, `owner_id` = the user's id).
-`api.js` already contains `createApartment`, `updateApartment` and `deleteApartment` for a future in-app UI.
-
 ## 📋 Usage
 
 1. **Log in**: Only needed once per device
@@ -78,7 +79,7 @@ For now apartments are added in Supabase (**Table Editor → apartments → Inse
 4. **Set Dates**: Select check-in and check-out dates
 5. **Generate Message**: Click "Generate Message" to create the personalized text
 6. **Send Message**: Use one of the WhatsApp options or copy to clipboard
-7. **Edit Messages** (optional): "✏️ Edit messages" changes the texts for the selected apartment
+7. **Menu (☰)**: manage apartments, edit messages, change your name or log out
 
 ## 🌍 Browser Support
 

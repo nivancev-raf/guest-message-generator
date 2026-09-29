@@ -51,14 +51,16 @@
     <!-- Main application -->
     <div id="appScreen" class="screen container" style="display: none;">
         <div class="header">
+            <button type="button" id="menuBtn" class="menu-btn" aria-label="Open menu" aria-controls="sideMenu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
             <img src="icon-192.png" alt="Guest Message Generator" class="logo">
             <h1>Guest Message Generator</h1>
-            <div class="user-bar">
-                <span id="greeting" class="greeting"></span>
-                <button type="button" id="logoutBtn" class="logout-btn">Log out</button>
-            </div>
+            <div id="greeting" class="greeting"></div>
         </div>
 
+    <!-- View: message generator -->
+    <div id="viewGenerator" class="view">
     <div id="loadError" class="error-message load-error" style="display: none;">
         <span id="loadErrorText"></span>
         <button type="button" id="retryLoadBtn" class="retry-btn">Retry</button>
@@ -70,7 +72,7 @@
             <option value="">Choose apartment...</option>
         </select>
         <div id="apartmentInfo" class="apartment-info" style="display: none;"></div>
-        <button type="button" id="editTemplatesBtn" class="edit-templates-btn" onclick="openTemplateEditor()" disabled>✏️ Edit messages</button>
+        <button type="button" id="editTemplatesBtn" class="edit-templates-btn" onclick="openMessagesView()" disabled>✏️ Edit messages</button>
     </div>
     
     <div class="form-group">
@@ -144,37 +146,177 @@
     </div>
     
     <div id="output"></div>
+    </div> <!-- end viewGenerator -->
+
+    <!-- View: apartment list -->
+    <div id="viewApartments" class="view" style="display: none;">
+        <div class="view-header">
+            <button type="button" class="back-btn" data-view="generator">← Back</button>
+            <h2>My apartments</h2>
+        </div>
+        <button type="button" class="primary-action-btn" onclick="openApartmentForm()">+ Add apartment</button>
+        <div id="apartmentList" class="apartment-list"></div>
+    </div>
+
+    <!-- View: add / edit apartment -->
+    <div id="viewApartmentForm" class="view" style="display: none;">
+        <div class="view-header">
+            <button type="button" class="back-btn" data-view="apartments">← Back</button>
+            <h2 id="apartmentFormTitle">Add apartment</h2>
+        </div>
+        <form id="apartmentForm" class="form-group stacked-form" novalidate>
+            <label for="aptName" class="required-label">Name (shown in the list)</label>
+            <input type="text" id="aptName" placeholder="e.g. Sunny 101" maxlength="60">
+
+            <label for="aptBuilding">Building</label>
+            <input type="text" id="aptBuilding" placeholder="e.g. Sunny Residence">
+
+            <label for="aptAddress">Address</label>
+            <input type="text" id="aptAddress" placeholder="Street and number">
+
+            <div class="field-row">
+                <div>
+                    <label for="aptNumber">Apartment number</label>
+                    <input type="text" id="aptNumber">
+                </div>
+                <div>
+                    <label for="aptEntrance">Entrance</label>
+                    <input type="text" id="aptEntrance">
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div>
+                    <label for="aptFloor">Floor</label>
+                    <input type="text" id="aptFloor">
+                </div>
+                <div>
+                    <label for="aptParking">Parking spot</label>
+                    <input type="text" id="aptParking">
+                </div>
+            </div>
+
+            <label for="aptGarageLevel">Garage level</label>
+            <input type="text" id="aptGarageLevel" placeholder="e.g. -1">
+
+            <div id="apartmentFormError" class="error-message" style="display: none;"></div>
+
+            <button type="submit" id="saveApartmentBtn" class="save-btn">Save apartment</button>
+            <button type="button" id="deleteApartmentBtn" class="danger-btn" style="display: none;">Delete apartment</button>
+        </form>
+    </div>
+
+    <!-- View: edit messages -->
+    <div id="viewMessages" class="view" style="display: none;">
+        <div class="view-header">
+            <button type="button" class="back-btn" data-view="generator">← Back</button>
+            <h2>Edit messages</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="msgApartment">Apartment</label>
+            <select id="msgApartment"></select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Language</label>
+            <div class="radio-group">
+                <label class="radio-container">
+                    <input type="radio" name="msgLanguage" value="sr" checked>
+                    <span class="radio-checkmark"></span>
+                    Serbian
+                </label>
+                <label class="radio-container">
+                    <input type="radio" name="msgLanguage" value="en">
+                    <span class="radio-checkmark"></span>
+                    English
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Message type</label>
+            <div class="radio-group radio-group-vertical">
+                <label class="radio-container">
+                    <input type="radio" name="msgType" value="reservation" checked>
+                    <span class="radio-checkmark"></span>
+                    Reservation (with transport)
+                </label>
+                <label class="radio-container">
+                    <input type="radio" name="msgType" value="reservation_no_transport">
+                    <span class="radio-checkmark"></span>
+                    Reservation (without transport)
+                </label>
+                <label class="radio-container">
+                    <input type="radio" name="msgType" value="garage">
+                    <span class="radio-checkmark"></span>
+                    Garage info
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="editor-field-header">
+                <label for="msgTemplate">Message <span id="msgTemplateBadge" class="template-badge"></span></label>
+                <button type="button" id="msgResetBtn" class="editor-reset-btn">Reset to default</button>
+            </div>
+            <textarea id="msgTemplate" class="template-textarea" rows="16"></textarea>
+
+            <div class="editor-hint">Tap a placeholder to insert it at the cursor:</div>
+            <div id="placeholderChips" class="placeholder-chips"></div>
+        </div>
+
+        <div id="msgStatus" class="editor-status" style="display: none;"></div>
+
+        <button type="button" id="saveMessagesBtn" class="save-btn">Save messages</button>
+    </div>
+
+    <!-- View: my profile -->
+    <div id="viewProfile" class="view" style="display: none;">
+        <div class="view-header">
+            <button type="button" class="back-btn" data-view="generator">← Back</button>
+            <h2>My profile</h2>
+        </div>
+        <form id="profileForm" class="form-group stacked-form" novalidate>
+            <label>Email</label>
+            <div id="profileEmail" class="readonly-value"></div>
+
+            <label for="profileName" class="required-label">Name</label>
+            <input type="text" id="profileName" maxlength="40" autocomplete="given-name">
+
+            <div id="profileStatus" class="editor-status" style="display: none;"></div>
+
+            <button type="submit" id="saveProfileBtn" class="save-btn">Save profile</button>
+        </form>
+    </div>
 
     </div> <!-- end app container -->
 
-    <!-- Message template editor -->
-    <div id="templateEditor" class="editor-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
-        <div class="editor-panel">
-            <div class="editor-header">
-                <h2 id="editorTitle">Edit messages</h2>
-                <button type="button" class="editor-close" onclick="closeTemplateEditor()" aria-label="Close">✕</button>
+    <!-- Side menu -->
+    <div id="menuBackdrop" class="menu-backdrop" hidden></div>
+    <nav id="sideMenu" class="side-menu" aria-label="Main menu" aria-hidden="true">
+        <div class="side-menu-header">
+            <div>
+                <div class="side-menu-title">Menu</div>
+                <div id="menuUserEmail" class="side-menu-email"></div>
             </div>
-
-            <div class="editor-tabs" role="tablist">
-                <button type="button" class="editor-tab active" data-lang="sr" onclick="switchEditorLanguage('sr')">Serbian</button>
-                <button type="button" class="editor-tab" data-lang="en" onclick="switchEditorLanguage('en')">English</button>
-            </div>
-
-            <div class="editor-placeholders">
-                <div class="editor-hint">Tap a placeholder to insert it into the selected message:</div>
-                <div id="placeholderChips" class="placeholder-chips"></div>
-            </div>
-
-            <div id="editorFields"></div>
-
-            <div id="editorStatus" class="editor-status" style="display: none;"></div>
-
-            <div class="editor-actions">
-                <button type="button" class="editor-cancel-btn" onclick="closeTemplateEditor()">Cancel</button>
-                <button type="button" id="saveTemplatesBtn" class="editor-save-btn" onclick="saveTemplates()">Save</button>
-            </div>
+            <button type="button" id="menuCloseBtn" class="menu-close-btn" aria-label="Close menu">✕</button>
         </div>
-    </div>
+
+        <button type="button" class="menu-item" data-view="generator">💬 Message generator</button>
+
+        <div class="menu-section">Apartments</div>
+        <button type="button" class="menu-item" data-action="addApartment">➕ Add apartment</button>
+        <button type="button" class="menu-item" data-view="apartments">🏠 Manage apartments</button>
+
+        <div class="menu-section">Messages</div>
+        <button type="button" class="menu-item" data-view="messages">✏️ Edit messages</button>
+
+        <div class="menu-section">Account</div>
+        <button type="button" class="menu-item" data-view="profile">👤 My profile</button>
+
+        <button type="button" class="menu-item menu-logout" data-action="logout">🚪 Log out</button>
+    </nav>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -184,7 +326,10 @@
     <script src="auth.js"></script>
     <script src="api.js"></script>
     <script src="pwa.js"></script>
+    <script src="menu.js"></script>
+    <script src="apartments.js"></script>
     <script src="editor.js"></script>
+    <script src="profile.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
