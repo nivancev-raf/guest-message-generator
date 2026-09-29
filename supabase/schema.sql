@@ -81,3 +81,13 @@ create policy "profiles_select_own" on public.profiles
     for select to authenticated using (id = auth.uid());
 create policy "profiles_update_own" on public.profiles
     for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- API access (needed when "Automatically expose new tables" is disabled).
+-- RLS above still limits every user to their own rows.
+-- anon only gets SELECT for the keep-alive ping; with no anon policy it always sees 0 rows.
+-- ---------------------------------------------------------------------------
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.apartments to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select on public.apartments to anon;
