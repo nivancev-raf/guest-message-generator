@@ -6,26 +6,22 @@
 
 const TEMPLATE_KEYS = ['reservation', 'reservation_no_transport', 'garage'];
 
-const TEMPLATE_LABELS = {
-    reservation: 'Reservation message (with transport)',
-    reservation_no_transport: 'Reservation message (without transport)',
-    garage: 'Garage info'
-};
+// Placeholders available in every template, grouped for the variable picker
+const TEMPLATE_PLACEHOLDER_GROUPS = ['RESERVATION', 'APARTMENT', 'PARKING'];
 
-// Placeholders available in every template
 const TEMPLATE_PLACEHOLDERS = [
-    { key: 'guest_name', description: 'Guest name' },
-    { key: 'check_in', description: 'Check-in date' },
-    { key: 'check_out', description: 'Check-out date' },
-    { key: 'price', description: 'Reservation price' },
-    { key: 'location', description: 'Full location (address, building, entrance, floor, apartment)' },
-    { key: 'address', description: 'Street address' },
-    { key: 'building', description: 'Building' },
-    { key: 'apartment', description: 'Apartment number' },
-    { key: 'entrance', description: 'Entrance' },
-    { key: 'floor', description: 'Floor' },
-    { key: 'parking', description: 'Parking spot' },
-    { key: 'garage_level', description: 'Garage level' }
+    { key: 'guest_name', label: 'Guest name', group: 'RESERVATION' },
+    { key: 'check_in', label: 'Check-in', group: 'RESERVATION' },
+    { key: 'check_out', label: 'Check-out', group: 'RESERVATION' },
+    { key: 'price', label: 'Price', group: 'RESERVATION' },
+    { key: 'location', label: 'Location', group: 'APARTMENT' },
+    { key: 'address', label: 'Address', group: 'APARTMENT' },
+    { key: 'building', label: 'Building', group: 'APARTMENT' },
+    { key: 'apartment', label: 'Apartment', group: 'APARTMENT' },
+    { key: 'entrance', label: 'Entrance', group: 'APARTMENT' },
+    { key: 'floor', label: 'Floor', group: 'APARTMENT' },
+    { key: 'parking', label: 'Parking spot', group: 'PARKING' },
+    { key: 'garage_level', label: 'Garage level', group: 'PARKING' }
 ];
 
 // Generic templates without any apartment specific details

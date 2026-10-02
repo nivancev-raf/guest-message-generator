@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Guest Message Generator</title>
     
     <!-- PWA Manifest -->
@@ -10,15 +10,19 @@
     
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="GuestMsg">
     <link rel="apple-touch-icon" href="/guest-message-generator/icon-192.png">
     
     <!-- Theme colors -->
-    <meta name="theme-color" content="#2c3e50">
-    <meta name="msapplication-TileColor" content="#2c3e50">
+    <meta name="theme-color" content="#0E0D0B">
+    <meta name="msapplication-TileColor" content="#0E0D0B">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Stylesheets -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -29,294 +33,350 @@
     </div>
 
     <!-- Login screen -->
-    <div id="loginScreen" class="screen container" style="display: none;">
-        <div class="header">
-            <img src="icon-192.png" alt="Guest Message Generator" class="logo">
-            <h1>Guest Message Generator</h1>
+    <div id="loginScreen" class="screen login-screen" style="display: none;">
+        <div class="login-brand">
+            <img src="icon-512.png" alt="SmartHost" class="login-logo">
+            <span class="kicker">SMARTHOST</span>
+            <h1 class="login-title">Guest messages</h1>
         </div>
 
-        <form id="loginForm" class="form-group login-form" novalidate>
-            <label for="loginEmail">Email</label>
-            <input type="email" id="loginEmail" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
+        <form id="loginForm" class="card login-card" novalidate>
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input type="email" id="loginEmail" class="input" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
+            </label>
 
-            <label for="loginPassword">Password</label>
-            <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Password" required>
+            <label class="field">
+                <span class="field-label">Password</span>
+                <input type="password" id="loginPassword" class="input" autocomplete="current-password" placeholder="Password" required>
+            </label>
 
-            <div id="loginError" class="error-message" style="display: none;"></div>
+            <div id="loginError" class="form-error" style="display: none;"></div>
 
-            <button type="submit" id="loginBtn" class="login-btn">Log in</button>
+            <button type="submit" id="loginBtn" class="btn btn-primary">Log in</button>
         </form>
     </div>
 
     <!-- Main application -->
-    <div id="appScreen" class="screen container" style="display: none;">
-        <div class="header">
-            <button type="button" id="menuBtn" class="menu-btn" aria-label="Open menu" aria-controls="sideMenu" aria-expanded="false">
-                <span></span><span></span><span></span>
+    <div id="appScreen" class="screen app-screen" style="display: none;">
+        <header class="topbar">
+            <img id="topbarLogo" src="icon-512.png" alt="SmartHost" class="topbar-logo">
+            <button type="button" id="topbarBack" class="topbar-back" aria-label="Back" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
             </button>
-            <img src="icon-192.png" alt="Guest Message Generator" class="logo">
-            <h1>Guest Message Generator</h1>
-            <div id="greeting" class="greeting"></div>
-        </div>
+            <div class="topbar-text">
+                <span id="topbarKicker" class="kicker">SMARTHOST</span>
+                <span id="topbarTitle" class="topbar-title">New message</span>
+            </div>
+            <button type="button" id="topbarAvatar" class="topbar-avatar" aria-label="Profile" style="display: none;"></button>
+            <button type="button" id="topbarAdd" class="topbar-add" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Add
+            </button>
+        </header>
 
-    <!-- View: message generator -->
-    <div id="viewGenerator" class="view">
-    <div id="loadError" class="error-message load-error" style="display: none;">
-        <span id="loadErrorText"></span>
-        <button type="button" id="retryLoadBtn" class="retry-btn">Retry</button>
-    </div>
-    
-    <div class="form-group">
-        <label for="apartmentSelect" class="required-label">Select Apartment</label>
-        <select id="apartmentSelect" onchange="updateApartmentInfo(); clearValidation();">
-            <option value="">Choose apartment...</option>
-        </select>
-        <div id="apartmentInfo" class="apartment-info" style="display: none;"></div>
-        <button type="button" id="editTemplatesBtn" class="edit-templates-btn" onclick="openMessagesView()" disabled>✏️ Edit messages</button>
-    </div>
-    
-    <div class="form-group">
-        <label for="guestName" class="required-label">Guest Name</label>
-        <input type="text" id="guestName" placeholder="Enter guest name" oninput="clearValidation()">
-    </div>
-    
-    <div class="form-group">
-        <label for="phoneNumber" class="required-label">Mobile Number</label>
-        <input type="tel" id="phoneNumber" placeholder="+381xxxxxxxxx" oninput="clearValidation()">
-        <div class="phone-help">Include country code (e.g., +381 for Serbia)</div>
-    </div>
-    
-    <div class="form-group date-group">
-        <div class="date-field">
-            <label for="checkIn" class="required-label">Check-in Date</label>
-            <input type="date" id="checkIn" onchange="clearValidation()">
-        </div>
-        <div class="date-field">
-            <label for="checkOut" class="required-label">Check-out Date</label>
-            <input type="date" id="checkOut" onchange="clearValidation()">
-        </div>
-    </div>
-    
-    <div class="form-group">
-        <label for="reservationPrice" class="required-label">Reservation Price</label>
-        <input type="text" id="reservationPrice" placeholder="e.g., 560€ total price" oninput="clearValidation()">
-    </div>
-    
-    <div class="form-group">
-        <label class="checkbox-container">
-            <input type="checkbox" id="askForDrive" checked>
-            <span class="checkmark"></span>
-            Include transport option
-        </label>
-    </div>
-    
-    <div class="form-group">
-        <label class="form-label">Message Language</label>
-        <div class="radio-group">
-            <label class="radio-container">
-                <input type="radio" name="language" value="sr" checked>
-                <span class="radio-checkmark"></span>
-                Serbian
-            </label>
-            <label class="radio-container">
-                <input type="radio" name="language" value="en">
-                <span class="radio-checkmark"></span>
-                English
-            </label>
-        </div>
-    </div>
-    
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-    
-    <div class="button-group">
-        <div class="button-row">
-            <button id="generateMessageBtn" onclick="generateMessage()" class="generate-btn" disabled>Generate Message</button>
-            <button id="generateGarageBtn" onclick="generateGarageInfo()" class="garage-btn" disabled>Generate Garage Info</button>
-        </div>
-        
-        <div class="button-row">
-            <button id="copyBtn" onclick="copyToClipboard()" class="copy-btn" disabled>Copy to Clipboard</button>
-            <div class="whatsapp-container">
-                <button id="autoWhatsappBtn" onclick="autoSendToWhatsApp()" class="whatsapp-auto-btn" disabled>Send via WhatsApp</button>
-                <div id="whatsappValidation" class="whatsapp-validation" style="display: none;">
-                    📱 Phone number required for WhatsApp
+        <main class="app-main">
+            <!-- View: Generate -->
+            <section id="viewGenerator" class="view">
+                <div class="view-content">
+                    <div id="loadError" class="load-error" style="display: none;">
+                        <span id="loadErrorText"></span>
+                        <button type="button" id="retryLoadBtn" class="btn-text">Retry</button>
+                    </div>
+
+                    <div class="segmented segmented-dark segmented-full" role="radiogroup" aria-label="Message type">
+                        <label class="segment"><input type="radio" name="messageType" value="res" checked><span>Reservation</span></label>
+                        <label class="segment"><input type="radio" name="messageType" value="garage"><span>Garage info</span></label>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-label">APARTMENT</div>
+                        <div class="card">
+                            <div class="field">
+                                <div class="select-wrap">
+                                    <select id="apartmentSelect" class="input select select-strong" aria-label="Apartment" onchange="updateApartmentInfo(); clearValidation();">
+                                        <option value="">Choose apartment...</option>
+                                    </select>
+                                    <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B655A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                                </div>
+                                <div id="apartmentSelectError" class="field-error-text"></div>
+                            </div>
+                            <div id="apartmentInfo" class="apartment-summary" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="section res-only">
+                        <div class="section-label">GUEST</div>
+                        <div class="card">
+                            <label class="field">
+                                <span class="field-label">Name</span>
+                                <input type="text" id="guestName" class="input" placeholder="Guest name" oninput="clearValidation()">
+                                <span id="guestNameError" class="field-error-text"></span>
+                            </label>
+                            <label class="field">
+                                <span class="field-label">Mobile number</span>
+                                <input type="tel" id="phoneNumber" class="input" placeholder="+381 6x xxx xxxx" oninput="clearValidation()">
+                                <span id="phoneNumberError" class="field-error-text"></span>
+                                <span class="helper">Include the country code, e.g. +381</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="section res-only">
+                        <div class="section-label">STAY</div>
+                        <div class="card">
+                            <div class="grid-2">
+                                <label class="field">
+                                    <span class="field-label">Check-in</span>
+                                    <input type="date" id="checkIn" class="input input-date" onchange="clearValidation()">
+                                    <span id="checkInError" class="field-error-text"></span>
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Check-out</span>
+                                    <input type="date" id="checkOut" class="input input-date" onchange="clearValidation()">
+                                    <span id="checkOutError" class="field-error-text"></span>
+                                </label>
+                            </div>
+                            <div id="nightsLabel" class="helper nights-label"></div>
+                            <label class="field">
+                                <span class="field-label">Total price</span>
+                                <div class="input-suffix-wrap">
+                                    <input type="text" id="reservationPrice" class="input input-with-suffix" inputmode="decimal" placeholder="560" oninput="clearValidation()">
+                                    <span class="input-suffix">€</span>
+                                </div>
+                                <span id="reservationPriceError" class="field-error-text"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-label">OPTIONS</div>
+                        <div class="card card-rows">
+                            <div class="option-row">
+                                <span class="option-title">Language</span>
+                                <div class="segmented segmented-light segmented-small" role="radiogroup" aria-label="Message language">
+                                    <label class="segment"><input type="radio" name="language" value="sr" checked><span>Srpski</span></label>
+                                    <label class="segment"><input type="radio" name="language" value="en"><span>English</span></label>
+                                </div>
+                            </div>
+                            <label class="option-row option-row-toggle res-only">
+                                <span class="option-text">
+                                    <span class="option-title">Airport transport</span>
+                                    <span class="option-sub">Mention the transfer offer</span>
+                                </span>
+                                <input type="checkbox" id="askForDrive" class="switch-input" checked>
+                                <span class="switch" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="output"></div>
-    </div> <!-- end viewGenerator -->
 
-    <!-- View: apartment list -->
-    <div id="viewApartments" class="view" style="display: none;">
-        <div class="view-header">
-            <button type="button" class="back-btn" data-view="generator">← Back</button>
-            <h2>My apartments</h2>
-        </div>
-        <button type="button" class="primary-action-btn" onclick="openApartmentForm()">+ Add apartment</button>
-        <div id="apartmentList" class="apartment-list"></div>
-    </div>
-
-    <!-- View: add / edit apartment -->
-    <div id="viewApartmentForm" class="view" style="display: none;">
-        <div class="view-header">
-            <button type="button" class="back-btn" data-view="apartments">← Back</button>
-            <h2 id="apartmentFormTitle">Add apartment</h2>
-        </div>
-        <form id="apartmentForm" class="form-group stacked-form" novalidate>
-            <label for="aptName" class="required-label">Name (shown in the list)</label>
-            <input type="text" id="aptName" placeholder="e.g. Sunny 101" maxlength="60">
-
-            <label for="aptBuilding">Building</label>
-            <input type="text" id="aptBuilding" placeholder="e.g. Sunny Residence">
-
-            <label for="aptAddress">Address</label>
-            <input type="text" id="aptAddress" placeholder="Street and number">
-
-            <div class="field-row">
-                <div>
-                    <label for="aptNumber">Apartment number</label>
-                    <input type="text" id="aptNumber">
+                <div class="sticky-action">
+                    <button type="button" id="generateBtn" class="btn btn-primary">Generate message</button>
                 </div>
-                <div>
-                    <label for="aptEntrance">Entrance</label>
-                    <input type="text" id="aptEntrance">
+            </section>
+
+            <!-- View: Generated message -->
+            <section id="viewGenerated" class="view" style="display: none;">
+                <div class="view-content view-content-tight">
+                    <div id="generatedChips" class="chips"></div>
+                    <div class="message-bubble">
+                        <div id="output" class="message-text"></div>
+                        <div id="outputCount" class="message-count"></div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field-row">
-                <div>
-                    <label for="aptFloor">Floor</label>
-                    <input type="text" id="aptFloor">
+                <div class="sticky-action action-grid">
+                    <button type="button" id="copyBtn" class="btn btn-outline" onclick="copyToClipboard()">Copy</button>
+                    <button type="button" id="autoWhatsappBtn" class="btn btn-dark btn-two-line" onclick="autoSendToWhatsApp()">
+                        <span>Send on WhatsApp</span>
+                        <span id="whatsappSub" class="btn-sub"></span>
+                    </button>
                 </div>
-                <div>
-                    <label for="aptParking">Parking spot</label>
-                    <input type="text" id="aptParking">
+            </section>
+
+            <!-- View: Apartments -->
+            <section id="viewApartments" class="view" style="display: none;">
+                <div class="view-content view-content-list">
+                    <div id="apartmentCount" class="section-label"></div>
+                    <div id="apartmentList" class="card card-list"></div>
                 </div>
-            </div>
+            </section>
 
-            <label for="aptGarageLevel">Garage level</label>
-            <input type="text" id="aptGarageLevel" placeholder="e.g. -1">
+            <!-- View: Add / edit apartment -->
+            <section id="viewApartmentForm" class="view" style="display: none;">
+                <form id="apartmentForm" novalidate>
+                    <div class="view-content">
+                        <div class="section">
+                            <div class="section-label">LISTING</div>
+                            <div class="card">
+                                <label class="field">
+                                    <span class="field-label">Name <span class="req">*</span></span>
+                                    <input type="text" id="aptName" class="input" maxlength="60">
+                                    <span class="helper">Shown in your apartment list</span>
+                                </label>
+                            </div>
+                        </div>
 
-            <div id="apartmentFormError" class="error-message" style="display: none;"></div>
+                        <div class="section">
+                            <div class="section-label">LOCATION</div>
+                            <div class="card">
+                                <label class="field">
+                                    <span class="field-label">Building</span>
+                                    <input type="text" id="aptBuilding" class="input" placeholder="e.g. Sunny Residence">
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Address</span>
+                                    <input type="text" id="aptAddress" class="input">
+                                </label>
+                                <div class="grid-3">
+                                    <label class="field">
+                                        <span class="field-label">Apartment</span>
+                                        <input type="text" id="aptNumber" class="input input-compact">
+                                    </label>
+                                    <label class="field">
+                                        <span class="field-label">Entrance</span>
+                                        <input type="text" id="aptEntrance" class="input input-compact" placeholder="—">
+                                    </label>
+                                    <label class="field">
+                                        <span class="field-label">Floor</span>
+                                        <input type="text" id="aptFloor" class="input input-compact">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
 
-            <button type="submit" id="saveApartmentBtn" class="save-btn">Save apartment</button>
-            <button type="button" id="deleteApartmentBtn" class="danger-btn" style="display: none;">Delete apartment</button>
-        </form>
+                        <div class="section">
+                            <div class="section-label">PARKING</div>
+                            <div class="card grid-2">
+                                <label class="field">
+                                    <span class="field-label">Parking spot</span>
+                                    <input type="text" id="aptParking" class="input input-compact">
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Garage level</span>
+                                    <input type="text" id="aptGarageLevel" class="input input-compact">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="apartmentFormError" class="form-error" style="display: none;"></div>
+
+                        <button type="button" id="deleteApartmentBtn" class="btn btn-danger-outline" style="display: none;">Delete apartment</button>
+                    </div>
+
+                    <div class="sticky-action">
+                        <button type="submit" id="saveApartmentBtn" class="btn btn-primary">Save apartment</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- View: Templates -->
+            <section id="viewMessages" class="view" style="display: none;">
+                <div class="view-content">
+                    <div class="card card-selector">
+                        <div class="selector-row">
+                            <label class="field">
+                                <span class="field-label">Apartment</span>
+                                <div class="select-wrap">
+                                    <select id="msgApartment" class="input select select-strong select-compact"></select>
+                                    <svg class="select-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B655A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                                </div>
+                            </label>
+                            <div class="segmented segmented-dark segmented-small segmented-lang" role="radiogroup" aria-label="Template language">
+                                <label class="segment"><input type="radio" name="msgLanguage" value="sr" checked><span>SR</span></label>
+                                <label class="segment"><input type="radio" name="msgLanguage" value="en"><span>EN</span></label>
+                            </div>
+                        </div>
+                        <div class="segmented segmented-light segmented-full segmented-type" role="radiogroup" aria-label="Message type">
+                            <label class="segment"><input type="radio" name="msgType" value="reservation" checked><span>With transport</span></label>
+                            <label class="segment"><input type="radio" name="msgType" value="reservation_no_transport"><span>No transport</span></label>
+                            <label class="segment"><input type="radio" name="msgType" value="garage"><span>Garage</span></label>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="message-header">
+                            <span class="section-label section-label-inline">MESSAGE</span>
+                            <span id="msgTemplateBadge" class="badge" style="display: none;">Custom</span>
+                            <span class="spacer"></span>
+                            <button type="button" id="msgResetBtn" class="btn-text" style="display: none;">Reset to default</button>
+                        </div>
+                        <div class="card card-editor">
+                            <textarea id="msgTemplate" class="template-textarea" aria-label="Message template"></textarea>
+                            <div class="variable-picker">
+                                <div class="helper">Tap a variable to insert it at the cursor</div>
+                                <div id="placeholderChips" class="variable-groups"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="msgStatus" class="status-line" style="display: none;"></div>
+                </div>
+
+                <div class="sticky-action">
+                    <button type="button" id="saveMessagesBtn" class="btn btn-primary">Save template</button>
+                </div>
+            </section>
+
+            <!-- View: Profile -->
+            <section id="viewProfile" class="view" style="display: none;">
+                <div class="view-content view-content-profile">
+                    <div class="identity">
+                        <div id="profileAvatar" class="avatar-lg"></div>
+                        <div class="identity-text">
+                            <span id="profileDisplayName" class="identity-name"></span>
+                            <span id="profileEmail" class="identity-email"></span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-label">ACCOUNT</div>
+                        <form id="profileForm" class="card" novalidate>
+                            <label class="field">
+                                <span class="field-label">Email</span>
+                                <input type="email" id="profileEmailInput" class="input" readonly tabindex="-1">
+                            </label>
+                            <label class="field">
+                                <span class="field-label">Name <span class="req">*</span></span>
+                                <input type="text" id="profileName" class="input" maxlength="40" autocomplete="given-name">
+                                <span class="helper">Used in the greeting and on your messages</span>
+                            </label>
+                            <button type="submit" id="saveProfileBtn" class="btn btn-primary btn-medium">Save profile</button>
+                            <div id="profileStatus" class="status-line" style="display: none;"></div>
+                        </form>
+                    </div>
+
+                    <div class="card card-flush">
+                        <button type="button" id="logoutBtn" class="logout-row">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/></svg>
+                            Log out
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom tab bar -->
+        <nav class="tabbar" aria-label="Main">
+            <button type="button" class="tab" data-tab="generator">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>
+                <span>Generate</span>
+            </button>
+            <button type="button" class="tab" data-tab="apartments">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V4h9v16M14 9h5v11M3 20h18M8 8h3M8 12h3M8 16h3"/></svg>
+                <span>Apartments</span>
+            </button>
+            <button type="button" class="tab" data-tab="messages">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
+                <span>Templates</span>
+            </button>
+            <button type="button" class="tab" data-tab="profile">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                <span>Profile</span>
+            </button>
+        </nav>
     </div>
-
-    <!-- View: edit messages -->
-    <div id="viewMessages" class="view" style="display: none;">
-        <div class="view-header">
-            <button type="button" class="back-btn" data-view="generator">← Back</button>
-            <h2>Edit messages</h2>
-        </div>
-
-        <div class="form-group">
-            <label for="msgApartment">Apartment</label>
-            <select id="msgApartment"></select>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Language</label>
-            <div class="radio-group">
-                <label class="radio-container">
-                    <input type="radio" name="msgLanguage" value="sr" checked>
-                    <span class="radio-checkmark"></span>
-                    Serbian
-                </label>
-                <label class="radio-container">
-                    <input type="radio" name="msgLanguage" value="en">
-                    <span class="radio-checkmark"></span>
-                    English
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Message type</label>
-            <div class="radio-group radio-group-vertical">
-                <label class="radio-container">
-                    <input type="radio" name="msgType" value="reservation" checked>
-                    <span class="radio-checkmark"></span>
-                    Reservation (with transport)
-                </label>
-                <label class="radio-container">
-                    <input type="radio" name="msgType" value="reservation_no_transport">
-                    <span class="radio-checkmark"></span>
-                    Reservation (without transport)
-                </label>
-                <label class="radio-container">
-                    <input type="radio" name="msgType" value="garage">
-                    <span class="radio-checkmark"></span>
-                    Garage info
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <div class="editor-field-header">
-                <label for="msgTemplate">Message <span id="msgTemplateBadge" class="template-badge"></span></label>
-                <button type="button" id="msgResetBtn" class="editor-reset-btn">Reset to default</button>
-            </div>
-            <textarea id="msgTemplate" class="template-textarea" rows="16"></textarea>
-
-            <div class="editor-hint">Tap a placeholder to insert it at the cursor:</div>
-            <div id="placeholderChips" class="placeholder-chips"></div>
-        </div>
-
-        <div id="msgStatus" class="editor-status" style="display: none;"></div>
-
-        <button type="button" id="saveMessagesBtn" class="save-btn">Save messages</button>
-    </div>
-
-    <!-- View: my profile -->
-    <div id="viewProfile" class="view" style="display: none;">
-        <div class="view-header">
-            <button type="button" class="back-btn" data-view="generator">← Back</button>
-            <h2>My profile</h2>
-        </div>
-        <form id="profileForm" class="form-group stacked-form" novalidate>
-            <label>Email</label>
-            <div id="profileEmail" class="readonly-value"></div>
-
-            <label for="profileName" class="required-label">Name</label>
-            <input type="text" id="profileName" maxlength="40" autocomplete="given-name">
-
-            <div id="profileStatus" class="editor-status" style="display: none;"></div>
-
-            <button type="submit" id="saveProfileBtn" class="save-btn">Save profile</button>
-        </form>
-    </div>
-
-    </div> <!-- end app container -->
-
-    <!-- Side menu -->
-    <div id="menuBackdrop" class="menu-backdrop" hidden></div>
-    <nav id="sideMenu" class="side-menu" aria-label="Main menu" aria-hidden="true">
-        <div class="side-menu-header">
-            <div>
-                <div class="side-menu-title">Menu</div>
-                <div id="menuUserEmail" class="side-menu-email"></div>
-            </div>
-            <button type="button" id="menuCloseBtn" class="menu-close-btn" aria-label="Close menu">✕</button>
-        </div>
-
-        <button type="button" class="menu-item" data-view="generator">💬 Message generator</button>
-
-        <div class="menu-section">Apartments</div>
-        <button type="button" class="menu-item" data-action="addApartment">➕ Add apartment</button>
-        <button type="button" class="menu-item" data-view="apartments">🏠 Manage apartments</button>
-
-        <div class="menu-section">Messages</div>
-        <button type="button" class="menu-item" data-view="messages">✏️ Edit messages</button>
-
-        <div class="menu-section">Account</div>
-        <button type="button" class="menu-item" data-view="profile">👤 My profile</button>
-
-        <button type="button" class="menu-item menu-logout" data-action="logout">🚪 Log out</button>
-    </nav>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -67,7 +67,6 @@ async function handleLogout() {
 }
 
 function resetAppState() {
-    closeMenu();
     showView('generator', { force: true });
     currentUser = null;
     currentProfile = null;
@@ -105,10 +104,20 @@ async function loadUserData() {
     selectDefaultApartment();
 }
 
+function getDisplayName() {
+    if (currentProfile && currentProfile.display_name) return currentProfile.display_name;
+    return currentUser ? currentUser.email.split('@')[0] : '';
+}
+
+// Greeting in the top bar kicker of the Generate screen + avatar initial
 function updateGreeting() {
-    const name = (currentProfile && currentProfile.display_name) || currentUser.email.split('@')[0];
-    document.getElementById('greeting').textContent = `Hello ${name}!`;
-    document.getElementById('menuUserEmail').textContent = currentUser.email;
+    const name = getDisplayName();
+    VIEWS.generator.kicker = name ? `HELLO, ${name.toUpperCase()}` : 'SMARTHOST';
+    if (currentView === 'generator') setTopbar(undefined, VIEWS.generator.kicker);
+
+    const avatar = document.getElementById('topbarAvatar');
+    avatar.textContent = name.trim().charAt(0).toUpperCase();
+    avatar.setAttribute('aria-label', `Hello ${name}! Open profile`);
 }
 
 // Fill the apartment dropdown with the user's apartments
@@ -143,110 +152,102 @@ function selectDefaultApartment() {
     updateButtonStates();
 }
 
-// Update apartment information display
+// Update the apartment summary line under the dropdown
 function updateApartmentInfo() {
     const apartment = getSelectedApartment();
     const infoDiv = document.getElementById('apartmentInfo');
-    infoDiv.innerHTML = '';
 
     if (!apartment) {
+        infoDiv.textContent = '';
         infoDiv.style.display = 'none';
         return;
     }
 
-    const rows = [
-        ['Address', apartment.address],
-        ['Building', apartment.building],
-        ['Entrance', apartment.entrance],
-        ['Floor', apartment.floor],
-        ['Apartment', apartment.apartment_number],
-        ['Parking', apartment.parking_spot && `Slot ${apartment.parking_spot}${apartment.garage_level ? `, Level ${apartment.garage_level}` : ''}`]
-    ];
+    let parking = '';
+    if (apartment.parking_spot) {
+        parking = `Parking ${apartment.parking_spot}${apartment.garage_level ? `, level ${apartment.garage_level}` : ''}`;
+    }
+    const parts = [
+        apartment.building,
+        apartment.address,
+        apartment.apartment_number && `Apt ${apartment.apartment_number}`,
+        parking
+    ].filter(Boolean);
 
-    rows.filter(([, value]) => value).forEach(([label, value]) => {
-        const row = document.createElement('div');
-        const strong = document.createElement('strong');
-        strong.textContent = `${label}: `;
-        row.appendChild(strong);
-        row.appendChild(document.createTextNode(value));
-        infoDiv.appendChild(row);
-    });
-    infoDiv.style.display = 'block';
+    infoDiv.textContent = parts.join(' · ');
+    infoDiv.style.display = parts.length ? 'block' : 'none';
+}
+
+// Reservation or garage info, chosen with the type control on the Generate screen
+function getMessageType() {
+    return document.querySelector('input[name="messageType"]:checked').value;
+}
+
+function getGeneratorLanguage() {
+    return document.querySelector('input[name="language"]:checked').value;
+}
+
+// Inline field errors
+const VALIDATED_FIELDS = ['apartmentSelect', 'guestName', 'phoneNumber', 'checkIn', 'checkOut', 'reservationPrice'];
+
+function setFieldError(fieldId, message) {
+    document.getElementById(fieldId).classList.toggle('required', !!message);
+    document.getElementById(`${fieldId}Error`).textContent = message || '';
 }
 
 // Clear form validation styling
 function clearValidation() {
-    document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
-    document.getElementById('errorMessage').style.display = 'none';
+    VALIDATED_FIELDS.forEach(fieldId => setFieldError(fieldId, ''));
     updateButtonStates();
 }
 
-// Validate form inputs
+// Validate form inputs (garage info only needs an apartment)
 function validateForm() {
+    const isGarage = getMessageType() === 'garage';
     const apartment = document.getElementById('apartmentSelect').value;
     const guestName = document.getElementById('guestName').value.trim();
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
     const reservationPrice = document.getElementById('reservationPrice').value.trim();
-    
-    const errorMessage = document.getElementById('errorMessage');
-    
-    document.querySelectorAll('.required').forEach(el => el.classList.remove('required'));
-    
-    let missingFields = [];
-    let isValid = true;
-    
-    if (!apartment) {
-        missingFields.push('Apartment');
-        document.getElementById('apartmentSelect').classList.add('required');
-        isValid = false;
+
+    VALIDATED_FIELDS.forEach(fieldId => setFieldError(fieldId, ''));
+    let firstInvalid = null;
+    const fail = (fieldId, message) => {
+        setFieldError(fieldId, message);
+        if (!firstInvalid) firstInvalid = fieldId;
+    };
+
+    if (!apartment) fail('apartmentSelect', 'Choose an apartment');
+
+    if (!isGarage) {
+        if (!guestName) fail('guestName', 'Enter the guest name');
+        if (!phoneNumber) fail('phoneNumber', 'Enter the mobile number');
+        if (!checkIn) fail('checkIn', 'Choose a date');
+        if (!checkOut) fail('checkOut', 'Choose a date');
+        if (!reservationPrice) fail('reservationPrice', 'Enter the total price');
+        if (checkIn && checkOut && new Date(checkOut) <= new Date(checkIn)) {
+            fail('checkOut', 'Must be after check-in');
+        }
     }
-    
-    if (!guestName) {
-        missingFields.push('Guest Name');
-        document.getElementById('guestName').classList.add('required');
-        isValid = false;
+
+    if (firstInvalid) {
+        document.getElementById(firstInvalid).focus();
+        return false;
     }
-    
-    if (!phoneNumber) {
-        missingFields.push('Mobile Number');
-        document.getElementById('phoneNumber').classList.add('required');
-        isValid = false;
-    }
-    
-    if (!checkIn) {
-        missingFields.push('Check-in Date');
-        document.getElementById('checkIn').classList.add('required');
-        isValid = false;
-    }
-    
-    if (!checkOut) {
-        missingFields.push('Check-out Date');
-        document.getElementById('checkOut').classList.add('required');
-        isValid = false;
-    }
-    
-    if (!reservationPrice) {
-        missingFields.push('Reservation Price');
-        document.getElementById('reservationPrice').classList.add('required');
-        isValid = false;
-    }
-    
-    if (checkIn && checkOut && new Date(checkOut) <= new Date(checkIn)) {
-        missingFields.push('Check-out date must be after check-in date');
-        document.getElementById('checkOut').classList.add('required');
-        isValid = false;
-    }
-    
-    if (!isValid) {
-        errorMessage.textContent = `Please fill in: ${missingFields.join(', ')}`;
-        errorMessage.style.display = 'block';
+    return true;
+}
+
+// The last generated message (shown on the "Ready to send" screen)
+let generatedMessage = '';
+let copiedTimer = null;
+
+function handleGenerate() {
+    if (getMessageType() === 'garage') {
+        generateGarageInfo();
     } else {
-        errorMessage.style.display = 'none';
+        generateMessage();
     }
-    
-    return isValid;
 }
 
 // Generate message based on form inputs
@@ -254,14 +255,14 @@ function generateMessage() {
     if (!validateForm()) {
         return;
     }
-    
-    const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
+
+    const selectedLanguage = getGeneratorLanguage();
     const guestName = document.getElementById('guestName').value.trim();
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
     const reservationPrice = document.getElementById('reservationPrice').value.trim();
     const askForDrive = document.getElementById('askForDrive').checked;
-    
+
     const apartment = getSelectedApartment();
     const templateKey = askForDrive ? 'reservation' : 'reservation_no_transport';
     const message = generateFromTemplate(apartment, selectedLanguage, templateKey, {
@@ -270,56 +271,108 @@ function generateMessage() {
         checkOut,
         price: reservationPrice
     });
-    
-    document.getElementById('output').textContent = message;
-    enableActionButtons();
+
+    showGeneratedMessage(message, 'RESERVATION MESSAGE', [
+        apartment.name,
+        guestName,
+        `${formatDate(checkIn, selectedLanguage)} – ${formatDate(checkOut, selectedLanguage)}`,
+        languageName(selectedLanguage)
+    ]);
+}
+
+// Generate garage info message
+function generateGarageInfo() {
+    if (!validateForm()) {
+        return;
+    }
+
+    const apartment = getSelectedApartment();
+    const selectedLanguage = getGeneratorLanguage();
+    const message = generateFromTemplate(apartment, selectedLanguage, 'garage');
+
+    showGeneratedMessage(message, 'GARAGE INFO', [
+        apartment.name,
+        apartment.parking_spot && `Parking ${apartment.parking_spot}`,
+        languageName(selectedLanguage)
+    ]);
+}
+
+function languageName(language) {
+    return language === 'sr' ? 'Srpski' : 'English';
+}
+
+// Render WhatsApp *bold* runs as <strong>, keeping line breaks (text nodes only, no HTML injection)
+function renderWhatsAppText(container, text) {
+    container.textContent = '';
+    text.split(/(\*[^*\n]+\*)/g).forEach(part => {
+        if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) {
+            const strong = document.createElement('strong');
+            strong.textContent = part.slice(1, -1);
+            container.appendChild(strong);
+        } else if (part) {
+            container.appendChild(document.createTextNode(part));
+        }
+    });
+}
+
+function showGeneratedMessage(message, kicker, chips) {
+    generatedMessage = message;
+
+    const chipContainer = document.getElementById('generatedChips');
+    chipContainer.innerHTML = '';
+    chips.filter(Boolean).forEach(label => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = label;
+        chipContainer.appendChild(chip);
+    });
+
+    renderWhatsAppText(document.getElementById('output'), message);
+    document.getElementById('outputCount').textContent = `${message.length} characters`;
+
+    resetCopyButton();
+    updateWhatsAppButton();
+    VIEWS.generated.kicker = kicker;
+    showView('generated');
+}
+
+function resetCopyButton() {
+    clearTimeout(copiedTimer);
+    document.getElementById('copyBtn').textContent = 'Copy';
 }
 
 // Copy generated message to clipboard
 function copyToClipboard() {
-    const output = document.getElementById('output');
-    if (output.textContent) {
-        navigator.clipboard.writeText(output.textContent).then(() => {
-            alert('Message copied to clipboard!');
-        });
-    }
+    if (!generatedMessage) return;
+    navigator.clipboard.writeText(generatedMessage).then(() => {
+        const copyBtn = document.getElementById('copyBtn');
+        copyBtn.textContent = 'Copied';
+        clearTimeout(copiedTimer);
+        copiedTimer = setTimeout(resetCopyButton, 2000);
+    }).catch(error => {
+        console.error('Copy failed', error);
+    });
+}
+
+// WhatsApp button: needs a phone number
+function updateWhatsAppButton() {
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    document.getElementById('autoWhatsappBtn').disabled = !phoneNumber || !generatedMessage;
+    document.getElementById('whatsappSub').textContent = phoneNumber ? `to ${phoneNumber}` : 'Add a number first';
 }
 
 // Auto-send message via WhatsApp (redirects current tab)
 function autoSendToWhatsApp() {
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const output = document.getElementById('output');
-    
-    if (!phoneNumber) {
-        showErrorMessage('Please enter a mobile number to send via WhatsApp.');
+    if (!phoneNumber || !generatedMessage) {
         return;
     }
-    
-    if (!output.textContent) {
-        showErrorMessage('Please generate a message first.');
-        return;
-    }
-    
-    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-    const encodedMessage = encodeURIComponent(output.textContent);
-    const whatsappURL = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
-    
-    window.location.href = whatsappURL;
-}
 
-// Generate garage info message
-function generateGarageInfo() {
-    const output = document.getElementById('output');
-    const apartment = getSelectedApartment();
-    
-    if (!apartment) {
-        showErrorMessage('Please select an apartment first.');
-        return;
-    }
-    
-    const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
-    output.textContent = generateFromTemplate(apartment, selectedLanguage, 'garage');
-    enableActionButtons();
+    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    const encodedMessage = encodeURIComponent(generatedMessage);
+    const whatsappURL = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+
+    window.location.href = whatsappURL;
 }
 
 // Clear all form fields
@@ -331,91 +384,41 @@ function clearAllFields() {
     document.getElementById('checkOut').value = '';
     document.getElementById('reservationPrice').value = '';
     document.getElementById('askForDrive').checked = true;
-    
+    document.querySelector('input[name="messageType"][value="res"]').checked = true;
+
     updateApartmentInfo();
-    
+
     // Clear validation and output
-    clearValidation();
+    generatedMessage = '';
     document.getElementById('output').textContent = '';
-    disableActionButtons();
+    clearValidation();
 }
 
-// Update button states based on form completion
-function updateButtonStates() {
-    const apartment = document.getElementById('apartmentSelect').value;
-    const guestName = document.getElementById('guestName').value.trim();
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+// Night count under the dates
+function updateNightsLabel() {
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
-    const price = document.getElementById('reservationPrice').value.trim();
-    
-    // Enable garage button when apartment is selected
-    const garageButton = document.getElementById('generateGarageBtn');
-    garageButton.disabled = !apartment;
-    document.getElementById('editTemplatesBtn').disabled = !apartment;
-    
-    // Enable message generation button only when all fields are filled
-    const allFieldsFilled = apartment && guestName && phoneNumber && checkIn && checkOut && price;
-    const messageButton = document.getElementById('generateMessageBtn');
-    messageButton.disabled = !allFieldsFilled;
-    
-    // Update WhatsApp button state and validation text
-    updateWhatsAppValidation();
-}
+    const label = document.getElementById('nightsLabel');
 
-// Enable action buttons (copy, whatsapp)
-function enableActionButtons() {
-    document.getElementById('copyBtn').disabled = false;
-    
-    // Enable WhatsApp button only if phone number is provided
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const whatsappBtn = document.getElementById('autoWhatsappBtn');
-    const whatsappValidation = document.getElementById('whatsappValidation');
-    
-    whatsappBtn.disabled = !phoneNumber;
-    
-    // Show/hide validation text
-    if (!phoneNumber) {
-        whatsappValidation.style.display = 'block';
-    } else {
-        whatsappValidation.style.display = 'none';
+    if (!checkIn || !checkOut) {
+        label.textContent = '';
+        label.classList.remove('invalid');
+        return;
     }
+    const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+    label.textContent = nights > 0
+        ? `${nights} ${nights === 1 ? 'night' : 'nights'}`
+        : 'Check-out must be after check-in';
+    label.classList.toggle('invalid', nights <= 0);
 }
 
-// Disable action buttons
-function disableActionButtons() {
-    document.getElementById('copyBtn').disabled = true;
-    document.getElementById('autoWhatsappBtn').disabled = true;
-    
-    // Hide validation text when buttons are disabled (no message generated)
-    document.getElementById('whatsappValidation').style.display = 'none';
-}
-
-// Update WhatsApp button state and validation
-function updateWhatsAppValidation() {
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const output = document.getElementById('output');
-    const whatsappBtn = document.getElementById('autoWhatsappBtn');
-    const whatsappValidation = document.getElementById('whatsappValidation');
-    
-    // Only show validation if there's a message generated but no phone number
-    if (output.textContent && !phoneNumber) {
-        whatsappBtn.disabled = true;
-        whatsappValidation.style.display = 'block';
-    } else if (output.textContent && phoneNumber) {
-        whatsappBtn.disabled = false;
-        whatsappValidation.style.display = 'none';
-    } else {
-        whatsappBtn.disabled = true;
-        whatsappValidation.style.display = 'none';
-    }
-}
-
-// Show error message
-function showErrorMessage(message) {
-    const errorDiv = document.getElementById('errorMessage');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+// Update the Generate screen for the chosen type and inputs
+function updateButtonStates() {
+    const isGarage = getMessageType() === 'garage';
+    document.getElementById('viewGenerator').classList.toggle('mode-garage', isGarage);
+    document.getElementById('generateBtn').textContent = isGarage ? 'Generate garage info' : 'Generate message';
+    updateNightsLabel();
+    updateWhatsAppButton();
 }
 
 // Initialize application when DOM is loaded
@@ -429,14 +432,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         input.addEventListener('change', updateButtonStates);
     });
     
-    // Add event listeners to language radio buttons
-    const languageRadios = document.querySelectorAll('input[name="language"]');
-    languageRadios.forEach(radio => {
-        radio.addEventListener('change', updateButtonStates);
+    // Type and language controls
+    document.querySelectorAll('input[name="language"], input[name="messageType"]').forEach(radio => {
+        radio.addEventListener('change', clearValidation);
     });
+    document.getElementById('generateBtn').addEventListener('click', handleGenerate);
 
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     initMenu();
+    showView('generator', { force: true });
     initApartments();
     initMessagesEditor();
     initProfile();

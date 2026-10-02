@@ -1,4 +1,4 @@
-// "Edit messages" view: one template at a time, chosen by apartment + language + message type
+// Templates view: one template at a time, chosen by apartment + language + message type
 
 const EDITOR_LANGUAGES = ['sr', 'en'];
 
@@ -12,13 +12,6 @@ function getEditorLanguage() {
 
 function getEditorType() {
     return document.querySelector('input[name="msgType"]:checked').value;
-}
-
-// Shortcut from the generator: open the view for the selected apartment and language
-function openMessagesView() {
-    const apartment = getSelectedApartment();
-    const language = document.querySelector('input[name="language"]:checked').value;
-    showView('messages', { apartmentId: apartment && apartment.id, language });
 }
 
 function enterMessagesView(options = {}) {
@@ -39,7 +32,7 @@ function enterMessagesView(options = {}) {
     ['msgApartment', 'msgTemplate', 'msgResetBtn', 'saveMessagesBtn'].forEach(id => {
         document.getElementById(id).disabled = !hasApartments;
     });
-    setEditorStatus(hasApartments ? '' : 'Add an apartment first (Menu → Add apartment).', 'info');
+    setEditorStatus(hasApartments ? '' : 'Add an apartment first (Apartments → Add).', 'info');
 
     renderPlaceholderChips();
 
@@ -58,7 +51,7 @@ function loadEditorApartment(apartmentId) {
         editorDraft = null;
         editorInitialDraft = null;
         document.getElementById('msgTemplate').value = '';
-        document.getElementById('msgTemplateBadge').textContent = '';
+        updateTemplateBadge();
         return;
     }
 
@@ -87,17 +80,12 @@ function storeEditorTemplate() {
     editorDraft[getEditorLanguage()][getEditorType()] = document.getElementById('msgTemplate').value;
 }
 
+// "Custom" badge and "Reset to default" are shown only for templates that differ from the default
 function updateTemplateBadge() {
-    const badge = document.getElementById('msgTemplateBadge');
-    if (!editorDraft) {
-        badge.textContent = '';
-        return;
-    }
-    const language = getEditorLanguage();
-    const key = getEditorType();
-    const isDefault = editorDraft[language][key] === DEFAULT_TEMPLATES[language][key];
-    badge.textContent = isDefault ? 'Default' : 'Custom';
-    badge.className = `template-badge ${isDefault ? 'default' : 'custom'}`;
+    const isCustom = !!editorDraft &&
+        editorDraft[getEditorLanguage()][getEditorType()] !== DEFAULT_TEMPLATES[getEditorLanguage()][getEditorType()];
+    document.getElementById('msgTemplateBadge').style.display = isCustom ? 'inline-block' : 'none';
+    document.getElementById('msgResetBtn').style.display = isCustom ? 'inline-block' : 'none';
 }
 
 function hasUnsavedTemplates() {
@@ -110,19 +98,44 @@ function confirmDiscardTemplates() {
     return !hasUnsavedTemplates() || confirm('You have unsaved message changes. Discard them?');
 }
 
+// Variable picker: chips with readable labels, the raw token is in the title
 function renderPlaceholderChips() {
     const container = document.getElementById('placeholderChips');
     if (container.childElementCount > 0) return;
-    TEMPLATE_PLACEHOLDERS.forEach(placeholder => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'placeholder-chip';
-        chip.textContent = `{{${placeholder.key}}}`;
-        chip.title = placeholder.description;
-        // Keep focus (and cursor position) in the textarea
-        chip.addEventListener('mousedown', event => event.preventDefault());
-        chip.addEventListener('click', () => insertPlaceholder(`{{${placeholder.key}}}`));
-        container.appendChild(chip);
+
+    TEMPLATE_PLACEHOLDER_GROUPS.forEach(groupName => {
+        const group = document.createElement('div');
+        group.className = 'variable-group';
+
+        const label = document.createElement('span');
+        label.className = 'variable-group-label';
+        label.textContent = groupName;
+
+        const chips = document.createElement('div');
+        chips.className = 'variable-chips';
+
+        TEMPLATE_PLACEHOLDERS.filter(placeholder => placeholder.group === groupName).forEach(placeholder => {
+            const token = `{{${placeholder.key}}}`;
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'variable-chip';
+            chip.title = token;
+
+            const plus = document.createElement('span');
+            plus.className = 'variable-chip-plus';
+            plus.textContent = '+';
+            chip.appendChild(plus);
+            chip.appendChild(document.createTextNode(placeholder.label));
+
+            // Keep focus (and cursor position) in the textarea
+            chip.addEventListener('mousedown', event => event.preventDefault());
+            chip.addEventListener('click', () => insertPlaceholder(token));
+            chips.appendChild(chip);
+        });
+
+        group.appendChild(label);
+        group.appendChild(chips);
+        container.appendChild(group);
     });
 }
 
@@ -172,21 +185,22 @@ async function saveTemplates() {
         const updated = await updateApartmentTemplates(apartment.id, buildTemplatesToSave(apartment.templates));
         apartments = apartments.map(item => item.id === updated.id ? updated : item);
         loadEditorApartment(updated.id);
-        setEditorStatus(`Messages for ${updated.name} saved.`, 'success');
+        setEditorStatus(`Templates for ${updated.name} saved`, 'success');
     } catch (error) {
         console.error('Saving templates failed', error);
         setEditorStatus('Saving failed. Check your internet connection and try again.', 'error');
     } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save messages';
+        saveBtn.textContent = 'Save template';
     }
 }
 
 function setEditorStatus(message, type = 'info') {
     const status = document.getElementById('msgStatus');
-    status.textContent = message;
-    status.className = `editor-status ${type}`;
-    status.style.display = message ? 'block' : 'none';
+    status.innerHTML = type === 'success' ? CHECK_ICON : '';
+    status.appendChild(document.createTextNode(message));
+    status.className = `status-line ${type}`;
+    status.style.display = message ? 'flex' : 'none';
 }
 
 function initMessagesEditor() {

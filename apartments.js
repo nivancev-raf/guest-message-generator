@@ -17,39 +17,50 @@ let editingApartmentId = null; // null = adding a new apartment
 function renderApartmentList() {
     const list = document.getElementById('apartmentList');
     list.innerHTML = '';
+    document.getElementById('apartmentCount').textContent =
+        `${apartments.length} ${apartments.length === 1 ? 'APARTMENT' : 'APARTMENTS'}`;
 
     if (apartments.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-state';
-        empty.textContent = 'You have no apartments yet. Add your first one.';
+        empty.textContent = 'You have no apartments yet. Tap Add to create your first one.';
         list.appendChild(empty);
         return;
     }
 
     apartments.forEach(apartment => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'apartment-card';
-        card.addEventListener('click', () => openApartmentForm(apartment.id));
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'apartment-row';
+        row.addEventListener('click', () => openApartmentForm(apartment.id));
 
-        const name = document.createElement('div');
-        name.className = 'apartment-card-name';
+        const tile = document.createElement('span');
+        tile.className = 'apartment-tile';
+        tile.textContent = apartment.apartment_number || apartment.name.charAt(0).toUpperCase();
+
+        const text = document.createElement('span');
+        text.className = 'apartment-row-text';
+
+        const name = document.createElement('span');
+        name.className = 'apartment-row-name';
         name.textContent = apartment.name;
 
-        const details = document.createElement('div');
-        details.className = 'apartment-card-details';
-        details.textContent = [apartment.building, apartment.address, apartment.apartment_number && `Apt ${apartment.apartment_number}`]
-            .filter(Boolean)
-            .join(' · ') || 'No details yet';
+        let parking = '';
+        if (apartment.parking_spot) {
+            parking = `P${apartment.parking_spot}${apartment.garage_level ? `, L${apartment.garage_level}` : ''}`;
+        }
+        const meta = document.createElement('span');
+        meta.className = 'apartment-row-meta';
+        meta.textContent = [apartment.building, apartment.address, parking].filter(Boolean).join(' · ') || 'No details yet';
 
-        const edit = document.createElement('span');
-        edit.className = 'apartment-card-edit';
-        edit.textContent = 'Edit ›';
+        text.appendChild(name);
+        text.appendChild(meta);
 
-        card.appendChild(name);
-        card.appendChild(details);
-        card.appendChild(edit);
-        list.appendChild(card);
+        row.appendChild(tile);
+        row.appendChild(text);
+        row.insertAdjacentHTML('beforeend',
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A39B8B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>');
+        list.appendChild(row);
     });
 }
 
@@ -60,7 +71,7 @@ function openApartmentForm(apartmentId = null) {
 
     if (!showView('apartmentForm')) return;
 
-    document.getElementById('apartmentFormTitle').textContent = apartment ? `Edit ${apartment.name}` : 'Add apartment';
+    setTopbar(apartment ? 'Edit apartment' : 'Add apartment');
     Object.entries(APARTMENT_FORM_FIELDS).forEach(([inputId, column]) => {
         document.getElementById(inputId).value = (apartment && apartment[column]) || '';
     });

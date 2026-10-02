@@ -1,21 +1,18 @@
-// Side menu (hamburger) and view navigation
+// Navigation: bottom tab bar, top bar and views
 
+// tab: tab highlighted while the view is shown
+// back: parent view for sub-screens (shows the back button instead of the logo)
 const VIEWS = {
-    generator: 'viewGenerator',
-    apartments: 'viewApartments',
-    apartmentForm: 'viewApartmentForm',
-    messages: 'viewMessages',
-    profile: 'viewProfile'
+    generator: { element: 'viewGenerator', tab: 'generator', title: 'New message', action: 'avatar' },
+    generated: { element: 'viewGenerated', tab: 'generator', title: 'Ready to send', back: 'generator' },
+    apartments: { element: 'viewApartments', tab: 'apartments', title: 'Apartments', action: 'add' },
+    apartmentForm: { element: 'viewApartmentForm', tab: 'apartments', title: 'Edit apartment', kicker: 'APARTMENTS', back: 'apartments' },
+    messages: { element: 'viewMessages', tab: 'messages', title: 'Templates' },
+    profile: { element: 'viewProfile', tab: 'profile', title: 'Profile' }
 };
 
-// Menu item that is highlighted for each view
-const VIEW_MENU_ITEM = {
-    generator: 'generator',
-    apartments: 'apartments',
-    apartmentForm: 'apartments',
-    messages: 'messages',
-    profile: 'profile'
-};
+// Check mark used in inline success messages
+const CHECK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
 
 let currentView = 'generator';
 
@@ -26,20 +23,10 @@ function registerViewHooks(name, hooks) {
     viewHooks[name] = hooks;
 }
 
-function openMenu() {
-    document.getElementById('sideMenu').classList.add('open');
-    document.getElementById('sideMenu').setAttribute('aria-hidden', 'false');
-    document.getElementById('menuBackdrop').hidden = false;
-    document.getElementById('menuBtn').setAttribute('aria-expanded', 'true');
-    document.body.classList.add('menu-open');
-}
-
-function closeMenu() {
-    document.getElementById('sideMenu').classList.remove('open');
-    document.getElementById('sideMenu').setAttribute('aria-hidden', 'true');
-    document.getElementById('menuBackdrop').hidden = true;
-    document.getElementById('menuBtn').setAttribute('aria-expanded', 'false');
-    document.body.classList.remove('menu-open');
+// Change the top bar title / kicker of the current view (e.g. "Add apartment")
+function setTopbar(title, kicker) {
+    if (title !== undefined) document.getElementById('topbarTitle').textContent = title;
+    if (kicker !== undefined) document.getElementById('topbarKicker').textContent = kicker;
 }
 
 // Show a view; returns false when the current view refused to be left (unsaved changes)
@@ -49,13 +36,28 @@ function showView(name, options = {}) {
         return false;
     }
 
-    Object.entries(VIEWS).forEach(([viewName, elementId]) => {
-        document.getElementById(elementId).style.display = viewName === name ? 'block' : 'none';
+    const view = VIEWS[name];
+    Object.entries(VIEWS).forEach(([viewName, config]) => {
+        document.getElementById(config.element).style.display = viewName === name ? 'block' : 'none';
     });
     currentView = name;
 
-    document.querySelectorAll('#sideMenu .menu-item[data-view]').forEach(item => {
-        item.classList.toggle('active', item.dataset.view === VIEW_MENU_ITEM[name]);
+    // Top bar
+    document.getElementById('topbarLogo').style.display = view.back ? 'none' : 'block';
+    document.getElementById('topbarBack').style.display = view.back ? 'flex' : 'none';
+    document.getElementById('topbarAvatar').style.display = view.action === 'avatar' ? 'flex' : 'none';
+    document.getElementById('topbarAdd').style.display = view.action === 'add' ? 'flex' : 'none';
+    setTopbar(view.title, view.kicker || 'SMARTHOST');
+
+    // Tab bar
+    document.querySelectorAll('.tabbar .tab').forEach(tab => {
+        const active = tab.dataset.tab === view.tab;
+        tab.classList.toggle('active', active);
+        if (active) {
+            tab.setAttribute('aria-current', 'page');
+        } else {
+            tab.removeAttribute('aria-current');
+        }
     });
 
     const entering = viewHooks[name];
@@ -66,28 +68,14 @@ function showView(name, options = {}) {
 }
 
 function initMenu() {
-    document.getElementById('menuBtn').addEventListener('click', openMenu);
-    document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
-    document.getElementById('menuBackdrop').addEventListener('click', closeMenu);
-    document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') closeMenu();
+    document.querySelectorAll('.tabbar .tab').forEach(tab => {
+        tab.addEventListener('click', () => showView(tab.dataset.tab));
     });
 
-    document.querySelectorAll('#sideMenu .menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-            closeMenu();
-            if (item.dataset.view) {
-                showView(item.dataset.view);
-            } else if (item.dataset.action === 'addApartment') {
-                openApartmentForm();
-            } else if (item.dataset.action === 'logout') {
-                handleLogout();
-            }
-        });
+    document.getElementById('topbarBack').addEventListener('click', () => {
+        const back = VIEWS[currentView].back;
+        if (back) showView(back);
     });
-
-    // "← Back" buttons inside views
-    document.querySelectorAll('.back-btn[data-view]').forEach(button => {
-        button.addEventListener('click', () => showView(button.dataset.view));
-    });
+    document.getElementById('topbarAvatar').addEventListener('click', () => showView('profile'));
+    document.getElementById('topbarAdd').addEventListener('click', () => openApartmentForm());
 }

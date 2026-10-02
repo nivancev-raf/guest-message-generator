@@ -1,7 +1,16 @@
-// "My profile" view: display name used in the greeting
+// Profile view: display name (used in the greeting) and log out
+
+function renderProfileIdentity() {
+    const name = getDisplayName();
+    const email = currentUser ? currentUser.email : '';
+    document.getElementById('profileAvatar').textContent = name.trim().charAt(0).toUpperCase();
+    document.getElementById('profileDisplayName').textContent = name;
+    document.getElementById('profileEmail').textContent = email;
+}
 
 function enterProfileView() {
-    document.getElementById('profileEmail').textContent = currentUser ? currentUser.email : '';
+    renderProfileIdentity();
+    document.getElementById('profileEmailInput').value = currentUser ? currentUser.email : '';
     document.getElementById('profileName').value = (currentProfile && currentProfile.display_name) || '';
     document.getElementById('profileName').classList.remove('required');
     setProfileStatus('');
@@ -24,7 +33,8 @@ async function saveProfile(event) {
     try {
         currentProfile = await updateProfile(currentUser.id, { display_name: displayName });
         updateGreeting();
-        setProfileStatus('Profile saved.', 'success');
+        renderProfileIdentity();
+        setProfileStatus('Profile saved', 'success');
     } catch (error) {
         console.error('Saving profile failed', error);
         setProfileStatus('Saving failed. Check your internet connection and try again.', 'error');
@@ -36,9 +46,10 @@ async function saveProfile(event) {
 
 function setProfileStatus(message, type = 'info') {
     const status = document.getElementById('profileStatus');
-    status.textContent = message;
-    status.className = `editor-status ${type}`;
-    status.style.display = message ? 'block' : 'none';
+    status.innerHTML = type === 'success' ? CHECK_ICON : '';
+    status.appendChild(document.createTextNode(message));
+    status.className = `status-line ${type}`;
+    status.style.display = message ? 'flex' : 'none';
 }
 
 function initProfile() {
@@ -47,5 +58,6 @@ function initProfile() {
         document.getElementById('profileName').classList.remove('required');
         setProfileStatus('');
     });
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     registerViewHooks('profile', { enter: enterProfileView });
 }

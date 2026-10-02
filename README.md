@@ -10,7 +10,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 
 - **Login**: Each user logs in with email + password and stays logged in (also in the home screen app)
 - **Private apartment data**: Apartment details live in a Supabase database, never in this repository. Row Level Security makes sure every user sees only their own apartments
-- **Side menu**: Message generator, apartments (add / edit / delete), message editor, my profile, log out
+- **Bottom tab bar**: Generate, Apartments (add / edit / delete), Templates (message editor), Profile (name, log out)
 - **Apartment management**: Add, edit and delete apartments directly in the app
 - **Per-apartment messages**: Reservation and garage messages can be edited per apartment, language and message type
 - **My profile**: Change the name shown in the greeting
@@ -49,10 +49,10 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ├── auth.js             # Login / logout / session (Supabase Auth)
 ├── api.js              # Data access layer (profiles, apartments)
 ├── templates.js        # Default message templates + placeholder rendering
-├── menu.js             # Side menu (hamburger) and view navigation
+├── menu.js             # Navigation: bottom tab bar, top bar and views
 ├── apartments.js       # Apartment list + add / edit / delete form
-├── editor.js           # "Edit messages" view (apartment, language, message type)
-├── profile.js          # "My profile" view (display name)
+├── editor.js           # Templates view (apartment, language, message type)
+├── profile.js          # Profile view (display name, log out)
 ├── app.js              # Main application logic and DOM manipulation
 ├── utils.js            # Date formatting helpers
 ├── pwa.js              # Progressive Web App functionality
@@ -79,7 +79,7 @@ Templates that are not customized fall back to the defaults in `templates.js`.
 4. **Set Dates**: Select check-in and check-out dates
 5. **Generate Message**: Click "Generate Message" to create the personalized text
 6. **Send Message**: Use one of the WhatsApp options or copy to clipboard
-7. **Menu (☰)**: manage apartments, edit messages, change your name or log out
+7. **Tabs**: manage apartments, edit templates, change your name or log out
 
 ## 🌍 Browser Support
 
