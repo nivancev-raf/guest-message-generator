@@ -35,7 +35,7 @@
     --font-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-    --tabbar-height: 72px;
+    --tabbar-height: 76px;
     --app-max-width: 480px;
 }
 
@@ -685,6 +685,8 @@ button:disabled {
     z-index: 10;
     padding: 8px 16px 14px;
     background: linear-gradient(to bottom, rgba(246, 244, 239, 0), var(--bg) 8px);
+    /* Fills any sub-pixel gap down to the tab bar, which is drawn on top of it */
+    box-shadow: 0 16px 0 var(--bg);
 }
 
 .action-grid {
@@ -700,29 +702,36 @@ button:disabled {
     transform: translateX(-50%);
     width: 100%;
     max-width: var(--app-max-width);
+    /* Fixed height so the sticky buttons (bottom: --tabbar-height) sit exactly on top of it */
+    height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
     z-index: 30;
     background: var(--surface);
     border-top: 1px solid var(--border-tabbar);
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    padding: 6px 4px calc(10px + env(safe-area-inset-bottom));
+    align-items: start;
+    padding: 8px 4px env(safe-area-inset-bottom);
 }
 
 .tab {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
     min-height: 44px;
-    padding: 6px 0 0;
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--text-tab);
 }
 
+/* The icon sits in a pill that is filled for the active tab */
 .tab svg {
+    box-sizing: content-box;
+    padding: 6px 20px;
+    border-radius: 999px;
     stroke-width: 1.8;
+    transition: background .2s ease;
 }
 
 .tab span {
@@ -730,32 +739,17 @@ button:disabled {
     font-weight: 600;
 }
 
-.tab::before {
-    content: '';
-    position: absolute;
-    top: -7px;
-    left: 50%;
-    width: 28px;
-    height: 3px;
-    margin-left: -14px;
-    border-radius: 0 0 3px 3px;
-    background: transparent;
-}
-
 .tab.active {
     color: var(--ink);
 }
 
 .tab.active svg {
+    background: var(--badge-bg);
     stroke-width: 2.2;
 }
 
 .tab.active span {
     font-weight: 800;
-}
-
-.tab.active::before {
-    background: var(--gold);
 }
 
 .load-error {
