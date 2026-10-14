@@ -16,6 +16,7 @@ create table if not exists public.apartments (
     floor            text,
     parking_spot     text,
     garage_level     text,
+    garage_pillar    text,                   -- optional pillar in the garage, e.g. "K6"
     sort_order       integer not null default 0,
     -- Custom message templates per language:
     -- { "sr": { "reservation": "...", "reservation_no_transport": "...", "garage": "..." }, "en": { ... } }
@@ -24,6 +25,9 @@ create table if not exists public.apartments (
     created_at       timestamptz not null default now(),
     updated_at       timestamptz not null default now()
 );
+
+-- Added later; safe to run on an existing database
+alter table public.apartments add column if not exists garage_pillar text;
 
 create index if not exists apartments_owner_idx on public.apartments (owner_id, sort_order);
 

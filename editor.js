@@ -185,7 +185,8 @@ async function saveTemplates() {
         const updated = await updateApartmentTemplates(apartment.id, buildTemplatesToSave(apartment.templates));
         apartments = apartments.map(item => item.id === updated.id ? updated : item);
         loadEditorApartment(updated.id);
-        setEditorStatus(`Templates for ${updated.name} saved`, 'success');
+        setEditorStatus('');
+        showToast('Template saved');
     } catch (error) {
         console.error('Saving templates failed', error);
         setEditorStatus('Saving failed. Check your internet connection and try again.', 'error');

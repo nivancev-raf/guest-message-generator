@@ -1,6 +1,6 @@
 // Data access layer - all database reads/writes go through here
 
-const APARTMENT_COLUMNS = 'id, name, building, address, apartment_number, entrance, floor, parking_spot, garage_level, sort_order, templates';
+const APARTMENT_COLUMNS = 'id, name, building, address, apartment_number, entrance, floor, parking_spot, garage_level, garage_pillar, sort_order, templates';
 
 // Profile of the logged in user (display name, default apartment)
 async function fetchProfile(userId) {

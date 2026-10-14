@@ -35,8 +35,16 @@
     --font-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-    --tabbar-height: 76px;
+    /* Bar content height + bottom padding (at least the home indicator area) */
+    --tabbar-bottom: max(22px, env(safe-area-inset-bottom));
+    --tabbar-height: calc(58px + var(--tabbar-bottom));
     --app-max-width: 480px;
+
+    --ease-ios: cubic-bezier(.32, .72, 0, 1);
+    --ease-out: cubic-bezier(.2, .8, .2, 1);
+    --dur-push: 420ms;
+    --dur-tab: 260ms;
+    --dur-pill: 340ms;
 }
 
 *, *::before, *::after {
@@ -281,7 +289,15 @@ button:disabled {
     border-radius: 14px;
     font-size: 16px;
     font-weight: 800;
-    transition: background .2s ease;
+    transition: background .2s ease, transform .15s ease, opacity .2s ease;
+}
+
+.btn:active:not(:disabled) {
+    transform: scale(.98);
+}
+
+.btn.is-busy {
+    opacity: .7;
 }
 
 .btn:disabled {
@@ -592,11 +608,115 @@ button:disabled {
    App shell: top bar, content, sticky action, tab bar
    --------------------------------------------------------------------------- */
 
+/* The app fills the screen; every view scrolls inside its own layer */
 .app-screen {
+    position: fixed;
+    inset: 0;
     max-width: var(--app-max-width);
     margin: 0 auto;
-    min-height: 100vh;
-    padding-bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.app-main {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--tabbar-height);
+    overflow: hidden;
+}
+
+.view {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    background: var(--bg);
+    /* Root views: inactive ones wait slightly lower, faded out */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity var(--dur-tab) ease, transform var(--dur-tab) var(--ease-out), visibility 0s linear var(--dur-tab);
+}
+
+.view::-webkit-scrollbar {
+    display: none;
+}
+
+.view.is-active {
+    z-index: 2;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity var(--dur-tab) ease, transform var(--dur-tab) var(--ease-out), visibility 0s;
+}
+
+/* Parent screen while a sub-screen is pushed over it */
+.view.is-active.is-covered {
+    transform: translateX(-28%);
+    pointer-events: none;
+}
+
+.app-main[data-motion="push"] .view.is-active {
+    transition: transform var(--dur-push) var(--ease-ios);
+}
+
+/* Sub-screens slide in from the right on top of their parent */
+.view.view-sub {
+    z-index: 5;
+    display: none;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(100%);
+    box-shadow: -12px 0 32px rgba(14, 13, 11, .18);
+    will-change: transform;
+    transition: transform var(--dur-push) var(--ease-ios);
+}
+
+.view.view-sub.is-mounted {
+    display: flex;
+}
+
+.view.view-sub.is-entered {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.view.no-transition {
+    transition: none !important;
+}
+
+.view-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: var(--topbar);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-push) var(--ease-ios);
+}
+
+.view-scrim.is-on {
+    opacity: .28;
+}
+
+.view > form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.view .view-content {
+    flex: 1;
 }
 
 .topbar {
@@ -630,6 +750,11 @@ button:disabled {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: transform .15s ease;
+}
+
+.topbar-back:active {
+    transform: scale(.9);
 }
 
 .topbar-text {
@@ -678,7 +803,11 @@ button:disabled {
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
-    transition: background .2s ease;
+    transition: background .2s ease, transform .15s ease;
+}
+
+.topbar-add:active {
+    transform: scale(.94);
 }
 
 .topbar-add:hover {
@@ -706,12 +835,10 @@ button:disabled {
 
 .sticky-action {
     position: sticky;
-    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+    bottom: 0;
     z-index: 10;
     padding: 8px 16px 14px;
-    background: linear-gradient(to bottom, rgba(246, 244, 239, 0), var(--bg) 8px);
-    /* Fills any sub-pixel gap down to the tab bar, which is drawn on top of it */
-    box-shadow: 0 16px 0 var(--bg);
+    background: var(--bg);
 }
 
 .action-grid {
@@ -721,24 +848,36 @@ button:disabled {
 }
 
 .tabbar {
-    position: fixed;
-    left: 50%;
+    position: absolute;
+    left: 0;
+    right: 0;
     bottom: 0;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: var(--app-max-width);
-    /* Fixed height so the sticky buttons (bottom: --tabbar-height) sit exactly on top of it */
-    height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+    height: var(--tabbar-height);
     z-index: 30;
     background: var(--surface);
     border-top: 1px solid var(--border-tabbar);
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: start;
-    padding: 8px 4px env(safe-area-inset-bottom);
+    padding: 10px 0 var(--tabbar-bottom);
+}
+
+/* One gold pill that slides behind the active tab icon */
+.tab-pill {
+    --tab-index: 0;
+    position: absolute;
+    top: 10px;
+    left: calc(var(--tab-index) * 25% + (25% - 60px) / 2);
+    width: 60px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--badge-bg);
+    transition: left var(--dur-pill) var(--ease-ios);
+    pointer-events: none;
 }
 
 .tab {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -748,15 +887,20 @@ button:disabled {
     border: 0;
     background: transparent;
     color: var(--text-tab);
+    transition: color .2s ease;
 }
 
-/* The icon sits in a pill that is filled for the active tab */
+.tab-icon {
+    width: 60px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tab svg {
-    box-sizing: content-box;
-    padding: 6px 20px;
-    border-radius: 999px;
     stroke-width: 1.8;
-    transition: background .2s ease;
+    transition: transform .2s ease, stroke-width .2s ease;
 }
 
 .tab span {
@@ -769,12 +913,46 @@ button:disabled {
 }
 
 .tab.active svg {
-    background: var(--badge-bg);
     stroke-width: 2.2;
+    transform: scale(1.06);
 }
 
 .tab.active span {
     font-weight: 800;
+}
+
+/* Toast above the tab bar */
+.toast {
+    position: absolute;
+    left: 50%;
+    bottom: calc(96px + var(--tabbar-bottom) - 22px);
+    z-index: 40;
+    height: 44px;
+    padding: 0 18px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #F3E7CF;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 12px 30px -10px rgba(14, 13, 11, .5);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(.96);
+    transition: opacity 220ms ease, transform 300ms var(--ease-ios);
+}
+
+.toast svg {
+    color: var(--gold);
+    flex-shrink: 0;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
 }
 
 .load-error {
@@ -904,11 +1082,55 @@ button:disabled {
     font-weight: 800;
 }
 
+.message-line {
+    min-height: 1.5em;
+}
+
+/* Lines fade in one after another when the message opens */
+.message-text.reveal-pending .message-line {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.message-text.is-revealed .message-line {
+    transition: opacity 320ms ease, transform 320ms var(--ease-out);
+    transition-delay: calc(var(--line, 0) * 28ms);
+}
+
+.message-editor {
+    display: block;
+    width: 100%;
+    min-height: 240px;
+    border: 1px solid var(--border-input);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #1E1B16;
+    background: var(--surface);
+    resize: vertical;
+    outline: none;
+}
+
+.message-editor:focus {
+    border-color: var(--gold-focus);
+    box-shadow: 0 0 0 3px rgba(201, 160, 106, .22);
+}
+
+.message-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.btn-text-muted {
+    color: var(--text-muted);
+}
+
 .message-count {
-    align-self: flex-end;
     font-size: 11px;
     color: var(--text-faint);
-    margin-top: 6px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -940,6 +1162,10 @@ button:disabled {
 
 .apartment-row:hover {
     background: var(--surface-subtle);
+}
+
+.apartment-row:active {
+    background: #F1ECE2;
 }
 
 .apartment-tile {
@@ -1185,4 +1411,16 @@ button:disabled {
 
 .logout-row:hover {
     background: #FBF3F1;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion: screens, pill and toasts change instantly
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        animation-duration: 0s !important;
+    }
 }

@@ -254,7 +254,7 @@ function getDisplayName() {
 function updateGreeting() {
     const name = getDisplayName();
     VIEWS.generator.kicker = name ? `HELLO, ${name.toUpperCase()}` : 'SMARTHOST';
-    if (currentView === 'generator') setTopbar(undefined, VIEWS.generator.kicker);
+    setTopbar(undefined, VIEWS.generator.kicker, 'generator');
 
     const avatar = document.getElementById('topbarAvatar');
     avatar.textContent = name.trim().charAt(0).toUpperCase();
@@ -306,7 +306,7 @@ function updateApartmentInfo() {
 
     let parking = '';
     if (apartment.parking_spot) {
-        parking = `Parking ${apartment.parking_spot}${apartment.garage_level ? `, level ${apartment.garage_level}` : ''}`;
+        parking = `Parking ${apartment.parking_spot}${apartment.garage_level ? `, level ${apartment.garage_level}` : ''}${apartment.garage_pillar ? `, pillar ${apartment.garage_pillar}` : ''}`;
     }
     const parts = [
         apartment.building,
@@ -379,16 +379,31 @@ function validateForm() {
     return true;
 }
 
-// The last generated message (shown on the "Ready to send" screen)
+// The last generated message (shown on the "Ready to send" screen).
+// generatedMessage may be edited by hand on that screen; originalMessage is what the template produced.
 let generatedMessage = '';
+let originalMessage = '';
 let copiedTimer = null;
+let generating = false;
 
+// Short "Generating…" state, then the preview slides in
 function handleGenerate() {
-    if (getMessageType() === 'garage') {
-        generateGarageInfo();
-    } else {
-        generateMessage();
-    }
+    if (generating || !validateForm()) return;
+
+    const generateBtn = document.getElementById('generateBtn');
+    generating = true;
+    generateBtn.textContent = 'Generating…';
+    generateBtn.classList.add('is-busy');
+    setTimeout(() => {
+        generating = false;
+        generateBtn.classList.remove('is-busy');
+        updateButtonStates();
+        if (getMessageType() === 'garage') {
+            generateGarageInfo();
+        } else {
+            generateMessage();
+        }
+    }, motionDelay(500));
 }
 
 // Generate message based on form inputs
@@ -434,6 +449,7 @@ function generateGarageInfo() {
     showGeneratedMessage(message, 'GARAGE INFO', [
         apartment.name,
         apartment.parking_spot && `Parking ${apartment.parking_spot}`,
+        apartment.garage_pillar && `Pillar ${apartment.garage_pillar}`,
         languageName(selectedLanguage)
     ]);
 }
@@ -442,22 +458,30 @@ function languageName(language) {
     return language === 'sr' ? 'Srpski' : 'English';
 }
 
-// Render WhatsApp *bold* runs as <strong>, keeping line breaks (text nodes only, no HTML injection)
+// Render WhatsApp *bold* runs as <strong>, one element per line (text nodes only, no HTML injection)
 function renderWhatsAppText(container, text) {
     container.textContent = '';
-    text.split(/(\*[^*\n]+\*)/g).forEach(part => {
-        if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) {
-            const strong = document.createElement('strong');
-            strong.textContent = part.slice(1, -1);
-            container.appendChild(strong);
-        } else if (part) {
-            container.appendChild(document.createTextNode(part));
-        }
+    text.split('\n').forEach((lineText, index) => {
+        const line = document.createElement('div');
+        line.className = 'message-line';
+        // Stagger is capped at 24 lines
+        line.style.setProperty('--line', Math.min(index, 24));
+        lineText.split(/(\*[^*\n]+\*)/g).forEach(part => {
+            if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) {
+                const strong = document.createElement('strong');
+                strong.textContent = part.slice(1, -1);
+                line.appendChild(strong);
+            } else if (part) {
+                line.appendChild(document.createTextNode(part));
+            }
+        });
+        container.appendChild(line);
     });
 }
 
 function showGeneratedMessage(message, kicker, chips) {
     generatedMessage = message;
+    originalMessage = message;
 
     const chipContainer = document.getElementById('generatedChips');
     chipContainer.innerHTML = '';
@@ -468,13 +492,89 @@ function showGeneratedMessage(message, kicker, chips) {
         chipContainer.appendChild(chip);
     });
 
-    renderWhatsAppText(document.getElementById('output'), message);
-    document.getElementById('outputCount').textContent = `${message.length} characters`;
+    closeMessageEditor();
+    renderGeneratedMessage();
 
     resetCopyButton();
     updateWhatsAppButton();
     VIEWS.generated.kicker = kicker;
     showView('generated');
+    revealMessageLines();
+}
+
+function renderGeneratedMessage() {
+    renderWhatsAppText(document.getElementById('output'), generatedMessage);
+    document.getElementById('outputCount').textContent = `${generatedMessage.length} characters`;
+    document.getElementById('undoMessageBtn').style.display = generatedMessage !== originalMessage ? 'inline-flex' : 'none';
+}
+
+// Lines fade in one after another, starting shortly after the push begins
+function revealMessageLines() {
+    const output = document.getElementById('output');
+    output.classList.remove('is-revealed');
+    output.classList.add('reveal-pending');
+    setTimeout(() => {
+        output.classList.add('is-revealed');
+        output.classList.remove('reveal-pending');
+    }, motionDelay(260));
+}
+
+// --- Editing only this message (the template stays unchanged) ---
+
+function isEditingMessage() {
+    return document.getElementById('outputEditor').style.display !== 'none';
+}
+
+function openMessageEditor() {
+    const editor = document.getElementById('outputEditor');
+    editor.value = generatedMessage;
+    document.getElementById('output').style.display = 'none';
+    editor.style.display = 'block';
+    editor.style.height = 'auto';
+    editor.style.height = `${editor.scrollHeight + 2}px`;
+    document.getElementById('editMessageBtn').textContent = 'Done';
+    editor.focus();
+}
+
+function closeMessageEditor() {
+    document.getElementById('outputEditor').style.display = 'none';
+    document.getElementById('output').style.display = 'block';
+    document.getElementById('editMessageBtn').textContent = 'Edit';
+}
+
+function toggleMessageEditor() {
+    if (isEditingMessage()) {
+        closeMessageEditor();
+        renderGeneratedMessage();
+    } else {
+        openMessageEditor();
+    }
+}
+
+function handleMessageEdit() {
+    const editor = document.getElementById('outputEditor');
+    generatedMessage = editor.value;
+    editor.style.height = 'auto';
+    editor.style.height = `${editor.scrollHeight + 2}px`;
+    document.getElementById('outputCount').textContent = `${generatedMessage.length} characters`;
+    document.getElementById('undoMessageBtn').style.display = generatedMessage !== originalMessage ? 'inline-flex' : 'none';
+    updateWhatsAppButton();
+}
+
+function undoMessageChanges() {
+    generatedMessage = originalMessage;
+    if (isEditingMessage()) {
+        document.getElementById('outputEditor').value = generatedMessage;
+        handleMessageEdit();
+    } else {
+        renderGeneratedMessage();
+    }
+}
+
+function initMessageEditing() {
+    document.getElementById('editMessageBtn').addEventListener('click', toggleMessageEditor);
+    document.getElementById('undoMessageBtn').addEventListener('click', undoMessageChanges);
+    document.getElementById('outputEditor').addEventListener('input', handleMessageEdit);
 }
 
 function resetCopyButton() {
@@ -490,6 +590,7 @@ function copyToClipboard() {
         copyBtn.textContent = 'Copied';
         clearTimeout(copiedTimer);
         copiedTimer = setTimeout(resetCopyButton, 2000);
+        showToast('Copied to clipboard');
     }).catch(error => {
         console.error('Copy failed', error);
     });
@@ -531,6 +632,7 @@ function clearAllFields() {
 
     // Clear validation and output
     generatedMessage = '';
+    originalMessage = '';
     document.getElementById('output').textContent = '';
     clearValidation();
 }
@@ -581,6 +683,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     initAuthForms();
     initMenu();
+    initMessageEditing();
     showView('generator', { force: true });
     initApartments();
     initMessagesEditor();

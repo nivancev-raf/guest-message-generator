@@ -139,25 +139,17 @@
 
     <!-- Main application -->
     <div id="appScreen" class="screen app-screen" style="display: none;">
-        <header class="topbar">
-            <img id="topbarLogo" src="icon-512.png" alt="SmartHost" class="topbar-logo">
-            <button type="button" id="topbarBack" class="topbar-back" aria-label="Back" style="display: none;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-            </button>
-            <div class="topbar-text">
-                <span id="topbarKicker" class="kicker">SMARTHOST</span>
-                <span id="topbarTitle" class="topbar-title">New message</span>
-            </div>
-            <button type="button" id="topbarAvatar" class="topbar-avatar" aria-label="Profile" style="display: none;"></button>
-            <button type="button" id="topbarAdd" class="topbar-add" style="display: none;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                Add
-            </button>
-        </header>
-
-        <main class="app-main">
+        <main id="appViewport" class="app-main" data-motion="tab">
             <!-- View: Generate -->
             <section id="viewGenerator" class="view">
+                <header class="topbar">
+                    <img src="icon-512.png" alt="SmartHost" class="topbar-logo">
+                    <div class="topbar-text">
+                        <span class="kicker">SMARTHOST</span>
+                        <span class="topbar-title">New message</span>
+                    </div>
+                    <button type="button" id="topbarAvatar" class="topbar-avatar" aria-label="Profile"></button>
+                </header>
                 <div class="view-content">
                     <div id="loadError" class="load-error" style="display: none;">
                         <span id="loadErrorText"></span>
@@ -256,13 +248,31 @@
                 </div>
             </section>
 
+            <!-- Darkens the parent screen while a sub-screen slides over it -->
+            <div id="viewScrim" class="view-scrim" aria-hidden="true"></div>
+
             <!-- View: Generated message -->
-            <section id="viewGenerated" class="view" style="display: none;">
+            <section id="viewGenerated" class="view view-sub">
+                <header class="topbar">
+                    <button type="button" class="topbar-back" aria-label="Back">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                    </button>
+                    <div class="topbar-text">
+                        <span class="kicker">RESERVATION MESSAGE</span>
+                        <span class="topbar-title">Ready to send</span>
+                    </div>
+                </header>
                 <div class="view-content view-content-tight">
                     <div id="generatedChips" class="chips"></div>
                     <div class="message-bubble">
                         <div id="output" class="message-text"></div>
-                        <div id="outputCount" class="message-count"></div>
+                        <textarea id="outputEditor" class="message-editor" aria-label="Edit message" style="display: none;"></textarea>
+                        <div class="message-footer">
+                            <button type="button" id="editMessageBtn" class="btn-text">Edit</button>
+                            <button type="button" id="undoMessageBtn" class="btn-text btn-text-muted" style="display: none;">Undo changes</button>
+                            <span class="spacer"></span>
+                            <span id="outputCount" class="message-count"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -276,7 +286,18 @@
             </section>
 
             <!-- View: Apartments -->
-            <section id="viewApartments" class="view" style="display: none;">
+            <section id="viewApartments" class="view">
+                <header class="topbar">
+                    <img src="icon-512.png" alt="SmartHost" class="topbar-logo">
+                    <div class="topbar-text">
+                        <span class="kicker">SMARTHOST</span>
+                        <span class="topbar-title">Apartments</span>
+                    </div>
+                    <button type="button" id="topbarAdd" class="topbar-add">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Add
+                    </button>
+                </header>
                 <div class="view-content view-content-list">
                     <div id="apartmentCount" class="section-label"></div>
                     <div id="apartmentList" class="card card-list"></div>
@@ -284,7 +305,16 @@
             </section>
 
             <!-- View: Add / edit apartment -->
-            <section id="viewApartmentForm" class="view" style="display: none;">
+            <section id="viewApartmentForm" class="view view-sub">
+                <header class="topbar">
+                    <button type="button" class="topbar-back" aria-label="Back">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                    </button>
+                    <div class="topbar-text">
+                        <span class="kicker">APARTMENTS</span>
+                        <span class="topbar-title">Edit apartment</span>
+                    </div>
+                </header>
                 <form id="apartmentForm" novalidate>
                     <div class="view-content">
                         <div class="section">
@@ -328,7 +358,7 @@
 
                         <div class="section">
                             <div class="section-label">PARKING</div>
-                            <div class="card grid-2">
+                            <div class="card grid-3">
                                 <label class="field">
                                     <span class="field-label">Parking spot</span>
                                     <input type="text" id="aptParking" class="input input-compact">
@@ -336,6 +366,10 @@
                                 <label class="field">
                                     <span class="field-label">Garage level</span>
                                     <input type="text" id="aptGarageLevel" class="input input-compact">
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Pillar</span>
+                                    <input type="text" id="aptGaragePillar" class="input input-compact" placeholder="e.g. K6">
                                 </label>
                             </div>
                         </div>
@@ -352,7 +386,14 @@
             </section>
 
             <!-- View: Templates -->
-            <section id="viewMessages" class="view" style="display: none;">
+            <section id="viewMessages" class="view">
+                <header class="topbar">
+                    <img src="icon-512.png" alt="SmartHost" class="topbar-logo">
+                    <div class="topbar-text">
+                        <span class="kicker">SMARTHOST</span>
+                        <span class="topbar-title">Templates</span>
+                    </div>
+                </header>
                 <div class="view-content">
                     <div class="card card-selector">
                         <div class="selector-row">
@@ -400,7 +441,14 @@
             </section>
 
             <!-- View: Profile -->
-            <section id="viewProfile" class="view" style="display: none;">
+            <section id="viewProfile" class="view">
+                <header class="topbar">
+                    <img src="icon-512.png" alt="SmartHost" class="topbar-logo">
+                    <div class="topbar-text">
+                        <span class="kicker">SMARTHOST</span>
+                        <span class="topbar-title">Profile</span>
+                    </div>
+                </header>
                 <div class="view-content view-content-profile">
                     <div class="identity">
                         <div id="profileAvatar" class="avatar-lg"></div>
@@ -439,23 +487,30 @@
 
         <!-- Bottom tab bar -->
         <nav class="tabbar" aria-label="Main">
+            <span id="tabPill" class="tab-pill" aria-hidden="true"></span>
             <button type="button" class="tab" data-tab="generator">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>
+                <span class="tab-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
                 <span>Generate</span>
             </button>
             <button type="button" class="tab" data-tab="apartments">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V4h9v16M14 9h5v11M3 20h18M8 8h3M8 12h3M8 16h3"/></svg>
+                <span class="tab-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V4h9v16M14 9h5v11M3 20h18M8 8h3M8 12h3M8 16h3"/></svg></span>
                 <span>Apartments</span>
             </button>
             <button type="button" class="tab" data-tab="messages">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
+                <span class="tab-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg></span>
                 <span>Templates</span>
             </button>
             <button type="button" class="tab" data-tab="profile">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                <span class="tab-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
                 <span>Profile</span>
             </button>
         </nav>
+
+        <!-- Toast, e.g. "Copied to clipboard" -->
+        <div id="toast" class="toast" role="status" aria-live="polite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+            <span id="toastText"></span>
+        </div>
     </div>
 
     <!-- Scripts -->

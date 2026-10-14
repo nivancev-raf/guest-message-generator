@@ -35,6 +35,7 @@ async function saveProfile(event) {
         updateGreeting();
         renderProfileIdentity();
         setProfileStatus('Profile saved', 'success');
+        showToast('Profile saved');
     } catch (error) {
         console.error('Saving profile failed', error);
         setProfileStatus('Saving failed. Check your internet connection and try again.', 'error');

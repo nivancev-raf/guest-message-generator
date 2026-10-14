@@ -72,7 +72,8 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ## ✉️ Message placeholders
 
 Templates can use: `{{guest_name}}`, `{{check_in}}`, `{{check_out}}`, `{{price}}`, `{{location}}`,
-`{{address}}`, `{{building}}`, `{{apartment}}`, `{{entrance}}`, `{{floor}}`, `{{parking}}`, `{{garage_level}}`.
+`{{address}}`, `{{building}}`, `{{apartment}}`, `{{entrance}}`, `{{floor}}`, `{{parking}}`, `{{garage_level}}`, `{{pillar}}`
+(the garage pillar, e.g. `K6`; optional per apartment).
 Templates that are not customized fall back to the defaults in `templates.js`.
 
 ## 📋 Usage
@@ -82,8 +83,9 @@ Templates that are not customized fall back to the defaults in `templates.js`.
 3. **Enter Guest Details**: Fill in guest name and mobile number (with country code)
 4. **Set Dates**: Select check-in and check-out dates
 5. **Generate Message**: Click "Generate Message" to create the personalized text
-6. **Send Message**: Use one of the WhatsApp options or copy to clipboard
-7. **Tabs**: manage apartments, edit templates, change your name or log out
+6. **Edit (optional)**: Tap *Edit* on the generated message to change just this message; the template stays as it is
+7. **Send Message**: Use one of the WhatsApp options or copy to clipboard
+8. **Tabs**: manage apartments, edit templates, change your name or log out
 
 ## 🌍 Browser Support
 

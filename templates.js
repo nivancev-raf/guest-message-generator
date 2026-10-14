@@ -21,7 +21,8 @@ const TEMPLATE_PLACEHOLDERS = [
     { key: 'entrance', label: 'Entrance', group: 'APARTMENT' },
     { key: 'floor', label: 'Floor', group: 'APARTMENT' },
     { key: 'parking', label: 'Parking spot', group: 'PARKING' },
-    { key: 'garage_level', label: 'Garage level', group: 'PARKING' }
+    { key: 'garage_level', label: 'Garage level', group: 'PARKING' },
+    { key: 'pillar', label: 'Pillar', group: 'PARKING' }
 ];
 
 // Generic templates without any apartment specific details
@@ -60,7 +61,7 @@ Ako dolazite automobilom, garažno mesto se doplačuje 10€ po danu.
 Radujemo se vašem dolasku i želimo vam prijatan boravak u našem gradu!`,
         garage: `🅿️ Informacije o parkingu
 
-Parking mesto *{{parking}}* na nivou *{{garage_level}}*.
+Parking mesto *{{parking}}* na nivou *{{garage_level}}*{{pillar_text}}.
 Stan *{{apartment}}*, *{{address}}*.
 
 Karticu za garažu preuzimate sa ključevima od stana.`
@@ -99,7 +100,7 @@ If you are arriving by car, parking space is charged additionally 10€ per day.
 We look forward to your arrival and wish you a pleasant stay in our city!`,
         garage: `🅿️ Parking Information
 
-Parking space *{{parking}}* on level *{{garage_level}}*.
+Parking space *{{parking}}* on level *{{garage_level}}*{{pillar_text}}.
 Apartment *{{apartment}}*, *{{address}}*.
 
 You will pick up the garage card together with the apartment keys.`
@@ -157,7 +158,12 @@ function buildTemplateVars(apartment, language, guest = {}) {
         entrance: apartment.entrance || '',
         floor: apartment.floor || '',
         parking: apartment.parking_spot || '',
-        garage_level: apartment.garage_level || ''
+        garage_level: apartment.garage_level || '',
+        pillar: apartment.garage_pillar || '',
+        // Optional ", stub *K6*" after the level; empty when no pillar is set
+        pillar_text: apartment.garage_pillar
+            ? `, ${language === 'sr' ? 'stub' : 'pillar'} *${apartment.garage_pillar}*`
+            : ''
     };
 }
 

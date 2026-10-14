@@ -9,7 +9,8 @@ const APARTMENT_FORM_FIELDS = {
     aptEntrance: 'entrance',
     aptFloor: 'floor',
     aptParking: 'parking_spot',
-    aptGarageLevel: 'garage_level'
+    aptGarageLevel: 'garage_level',
+    aptGaragePillar: 'garage_pillar'
 };
 
 let editingApartmentId = null; // null = adding a new apartment
@@ -47,7 +48,7 @@ function renderApartmentList() {
 
         let parking = '';
         if (apartment.parking_spot) {
-            parking = `P${apartment.parking_spot}${apartment.garage_level ? `, L${apartment.garage_level}` : ''}`;
+            parking = `P${apartment.parking_spot}${apartment.garage_level ? `, L${apartment.garage_level}` : ''}${apartment.garage_pillar ? `, ${apartment.garage_pillar}` : ''}`;
         }
         const meta = document.createElement('span');
         meta.className = 'apartment-row-meta';
@@ -115,6 +116,7 @@ async function saveApartment(event) {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
     try {
+        const adding = !editingApartmentId;
         if (editingApartmentId) {
             const updated = await updateApartment(editingApartmentId, values);
             apartments = apartments.map(item => item.id === updated.id ? updated : item);
@@ -125,6 +127,7 @@ async function saveApartment(event) {
         }
         refreshApartmentSelects();
         showView('apartments');
+        showToast(adding ? 'Apartment added' : 'Apartment saved', 200);
     } catch (error) {
         console.error('Saving apartment failed', error);
         setApartmentFormError('Saving failed. Check your internet connection and try again.');
@@ -152,6 +155,7 @@ async function removeApartment() {
         }
         refreshApartmentSelects();
         showView('apartments');
+        showToast('Apartment deleted', 200);
     } catch (error) {
         console.error('Deleting apartment failed', error);
         setApartmentFormError('Deleting failed. Check your internet connection and try again.');
