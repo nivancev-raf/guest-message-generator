@@ -9,6 +9,8 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ## ✨ Features
 
 - **Login**: Each user logs in with email + password and stays logged in (also in the home screen app)
+- **Sign up**: Anyone can create their own account (name, email, password) and confirm it via email
+- **Forgot password**: A reset link is sent by email; the link opens the app to set a new password
 - **Private apartment data**: Apartment details live in a Supabase database, never in this repository. Row Level Security makes sure every user sees only their own apartments
 - **Bottom tab bar**: Generate, Apartments (add / edit / delete), Templates (message editor), Profile (name, log out)
 - **Apartment management**: Add, edit and delete apartments directly in the app
@@ -22,11 +24,13 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ## 🔐 Backend setup (Supabase, free plan)
 
 1. Create a project on [supabase.com](https://supabase.com)
-2. **Authentication → Sign In / Providers → Email**: disable *Allow new users to sign up* and *Confirm email*
-3. **Authentication → Users → Add user**: create one user per person (email + password, auto confirm)
-4. **SQL Editor**: run [`supabase/schema.sql`](supabase/schema.sql), then insert profiles and apartments (the data script is kept outside of the repository)
-5. **Project Settings → API**: put the API URL and the **Publishable key** (or the legacy `anon` key) into `config.js` — never the secret key (both are public by design; data is protected by login + RLS)
-6. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can ping the database every 3 days (free Supabase projects are paused after 7 days of inactivity)
+2. **Authentication → Sign In / Providers → Email**: enable *Allow new users to sign up* and *Confirm email*
+3. **Authentication → URL Configuration**: set *Site URL* to `https://nivancev-raf.github.io/guest-message-generator/` and add the same URL (plus `http://localhost:8000/` for local testing) to *Redirect URLs*. Confirmation and password reset links only open allowed URLs
+4. **Authentication → SMTP Settings** (*Emails → SMTP* in newer dashboards): the built-in email service only sends a few emails per hour and is meant for testing. For real users enable custom SMTP, e.g. Gmail (`smtp.gmail.com`, port `465`, your Gmail address as user and a Google [App Password](https://myaccount.google.com/apppasswords) as password)
+5. Optional: **Authentication → Email Templates** to translate the *Confirm signup* and *Reset password* emails
+6. **SQL Editor**: run [`supabase/schema.sql`](supabase/schema.sql). It also creates a trigger that adds a profile for every new account. Apartments are added by users in the app (or with a data script kept outside of the repository)
+7. **Project Settings → API**: put the API URL and the **Publishable key** (or the legacy `anon` key) into `config.js` — never the secret key (both are public by design; data is protected by login + RLS)
+8. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can ping the database every 3 days (free Supabase projects are paused after 7 days of inactivity)
 
 > Never commit apartment details, emails or passwords to this repository.
 
@@ -43,10 +47,10 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ## 🏗️ Project Structure
 
 ```
-├── index.html          # Login screen, main form and message editor
+├── index.html          # Login / sign up / password reset, main form and message editor
 ├── styles.css          # All CSS styles and responsive design
 ├── config.js           # Supabase project URL + anon (public) key
-├── auth.js             # Login / logout / session (Supabase Auth)
+├── auth.js             # Login, sign up, password reset, session (Supabase Auth)
 ├── api.js              # Data access layer (profiles, apartments)
 ├── templates.js        # Default message templates + placeholder rendering
 ├── menu.js             # Navigation: bottom tab bar, top bar and views
@@ -73,7 +77,7 @@ Templates that are not customized fall back to the defaults in `templates.js`.
 
 ## 📋 Usage
 
-1. **Log in**: Only needed once per device
+1. **Log in**: Only needed once per device. New users tap *Create account*, confirm the email and add their first apartment; *Forgot password?* sends a reset link
 2. **Select Apartment**: Choose from the dropdown list (your default apartment is preselected)
 3. **Enter Guest Details**: Fill in guest name and mobile number (with country code)
 4. **Set Dates**: Select check-in and check-out dates

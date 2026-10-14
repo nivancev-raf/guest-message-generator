@@ -24,36 +24,168 @@ function isSupabaseConfigured() {
     return !SUPABASE_URL.includes('YOUR-PROJECT-REF') && !SUPABASE_ANON_KEY.includes('YOUR-ANON');
 }
 
+// Login screen modes: 'login', 'signup', 'forgot', 'reset' (new password) or 'status' (message)
+const AUTH_FORMS = { login: 'loginForm', signup: 'signupForm', forgot: 'forgotForm', reset: 'resetForm' };
+const MIN_PASSWORD_LENGTH = 8;
+
+function setAuthMode(mode, statusMessage) {
+    Object.entries(AUTH_FORMS).forEach(([formMode, formId]) => {
+        document.getElementById(formId).style.display = formMode === mode ? 'flex' : 'none';
+    });
+    document.querySelectorAll('.auth-form .form-error').forEach(error => {
+        error.style.display = 'none';
+    });
+
+    const status = document.getElementById('authStatus');
+    status.style.display = mode === 'status' ? 'flex' : 'none';
+    document.getElementById('authStatusText').textContent = statusMessage || '';
+}
+
+function showAuthError(errorId, message) {
+    const error = document.getElementById(errorId);
+    error.textContent = message;
+    error.style.display = 'block';
+}
+
+// Disable a submit button and show a busy label while the request runs
+async function withBusyButton(buttonId, busyLabel, action) {
+    const button = document.getElementById(buttonId);
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = busyLabel;
+    try {
+        await action();
+    } finally {
+        button.disabled = false;
+        button.textContent = label;
+    }
+}
+
+// Error message for a new password, or '' when it is fine
+function validateNewPassword(password, confirmation) {
+    if (password.length < MIN_PASSWORD_LENGTH) return `Password must have at least ${MIN_PASSWORD_LENGTH} characters.`;
+    if (password !== confirmation) return 'Passwords do not match.';
+    return '';
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function authErrorMessage(error, fallback) {
+    const message = (error && error.message) || '';
+    if (/already registered/i.test(message)) return 'An account with this email already exists. Log in instead.';
+    if (/email not confirmed/i.test(message)) return 'Please confirm your email first. Check your inbox for the link.';
+    if (/password/i.test(message) && /(weak|short|characters)/i.test(message)) return message;
+    if (/rate limit|too many/i.test(message)) return 'Too many attempts. Please wait a few minutes and try again.';
+    return fallback;
+}
+
 // Handle login form submit
 async function handleLogin(event) {
     event.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
-    const loginError = document.getElementById('loginError');
-    const loginBtn = document.getElementById('loginBtn');
 
-    loginError.style.display = 'none';
+    document.getElementById('loginError').style.display = 'none';
     if (!email || !password) {
-        loginError.textContent = 'Please enter email and password.';
-        loginError.style.display = 'block';
+        showAuthError('loginError', 'Please enter email and password.');
         return;
     }
 
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Logging in...';
-    try {
-        const session = await signIn(email, password);
-        document.getElementById('loginPassword').value = '';
-        await enterApp(session);
-    } catch (error) {
-        loginError.textContent = error && error.message === 'Invalid login credentials'
-            ? 'Wrong email or password.'
-            : 'Login failed. Check your internet connection and try again.';
-        loginError.style.display = 'block';
-    } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Log in';
-    }
+    await withBusyButton('loginBtn', 'Logging in...', async () => {
+        try {
+            const session = await signIn(email, password);
+            document.getElementById('loginPassword').value = '';
+            await enterApp(session);
+        } catch (error) {
+            showAuthError('loginError', error && error.message === 'Invalid login credentials'
+                ? 'Wrong email or password.'
+                : authErrorMessage(error, 'Login failed. Check your internet connection and try again.'));
+        }
+    });
+}
+
+async function handleSignup(event) {
+    event.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirmation = document.getElementById('signupPasswordConfirm').value;
+
+    document.getElementById('signupError').style.display = 'none';
+    if (!name) return showAuthError('signupError', 'Please enter your name.');
+    if (!isValidEmail(email)) return showAuthError('signupError', 'Please enter a valid email address.');
+    const passwordError = validateNewPassword(password, confirmation);
+    if (passwordError) return showAuthError('signupError', passwordError);
+
+    await withBusyButton('signupBtn', 'Creating account...', async () => {
+        try {
+            const session = await signUp(email, password, name);
+            document.getElementById('signupForm').reset();
+            if (session) {
+                await enterApp(session);
+            } else {
+                setAuthMode('status', `We sent a confirmation link to ${email}. Open it to activate your account, then log in.`);
+            }
+        } catch (error) {
+            showAuthError('signupError', authErrorMessage(error, 'Creating the account failed. Check your internet connection and try again.'));
+        }
+    });
+}
+
+async function handleForgotPassword(event) {
+    event.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim();
+
+    document.getElementById('forgotError').style.display = 'none';
+    if (!isValidEmail(email)) return showAuthError('forgotError', 'Please enter a valid email address.');
+
+    await withBusyButton('forgotBtn', 'Sending...', async () => {
+        try {
+            await sendPasswordReset(email);
+            // Same message whether or not the account exists
+            setAuthMode('status', `If an account exists for ${email}, we sent a link to set a new password. Check your inbox (and spam folder).`);
+        } catch (error) {
+            showAuthError('forgotError', authErrorMessage(error, 'Sending the email failed. Check your internet connection and try again.'));
+        }
+    });
+}
+
+// New password after opening the reset link (the link already logged the user in)
+async function handleSetNewPassword(event) {
+    event.preventDefault();
+    const password = document.getElementById('resetPassword').value;
+    const confirmation = document.getElementById('resetPasswordConfirm').value;
+
+    document.getElementById('resetError').style.display = 'none';
+    const passwordError = validateNewPassword(password, confirmation);
+    if (passwordError) return showAuthError('resetError', passwordError);
+
+    await withBusyButton('resetBtn', 'Saving...', async () => {
+        try {
+            await updatePassword(password);
+            document.getElementById('resetForm').reset();
+            await enterApp(await getSession());
+        } catch (error) {
+            showAuthError('resetError', authErrorMessage(error, 'Saving the password failed. Open the link from the email again.'));
+        }
+    });
+}
+
+function showPasswordReset() {
+    showScreen('login');
+    setAuthMode('reset');
+}
+
+function initAuthForms() {
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('signupForm').addEventListener('submit', handleSignup);
+    document.getElementById('forgotForm').addEventListener('submit', handleForgotPassword);
+    document.getElementById('resetForm').addEventListener('submit', handleSetNewPassword);
+    document.querySelectorAll('[data-auth-mode]').forEach(link => {
+        link.addEventListener('click', () => setAuthMode(link.dataset.authMode));
+    });
 }
 
 async function handleLogout() {
@@ -64,6 +196,7 @@ async function handleLogout() {
     }
     resetAppState();
     showScreen('login');
+    setAuthMode('login');
 }
 
 function resetAppState() {
@@ -77,14 +210,16 @@ function resetAppState() {
 
 // Load profile + apartments and show the main screen
 async function enterApp(session) {
-    currentUser = session.user;
     showScreen('app');
+    if (currentUser) return;
+    currentUser = session.user;
     await loadUserData();
 }
 
 async function loadUserData() {
     const loadError = document.getElementById('loadError');
     loadError.style.display = 'none';
+    let loaded = false;
     try {
         const [profile, apartmentList] = await Promise.all([
             fetchProfile(currentUser.id),
@@ -92,6 +227,7 @@ async function loadUserData() {
         ]);
         currentProfile = profile;
         apartments = apartmentList;
+        loaded = true;
     } catch (error) {
         console.error('Loading data failed', error);
         document.getElementById('loadErrorText').textContent = 'Could not load your apartments. Check your internet connection.';
@@ -102,6 +238,11 @@ async function loadUserData() {
 
     populateApartmentSelect();
     selectDefaultApartment();
+
+    // New account: start by adding the first apartment
+    if (loaded && apartments.length === 0 && currentView === 'generator') {
+        showView('apartments');
+    }
 }
 
 function getDisplayName() {
@@ -438,7 +579,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     document.getElementById('generateBtn').addEventListener('click', handleGenerate);
 
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    initAuthForms();
     initMenu();
     showView('generator', { force: true });
     initApartments();
@@ -460,17 +601,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // Session expired or logged out in another tab
+    // Session expired or logged out in another tab; reset link opened in this tab
     onAuthStateChange((event) => {
         if (event === 'SIGNED_OUT' && currentUser) {
             resetAppState();
             showScreen('login');
+            setAuthMode('login');
+        } else if (event === 'PASSWORD_RECOVERY') {
+            showPasswordReset();
         }
     });
 
+    if (authLinkError) {
+        history.replaceState(null, '', APP_URL);
+        showScreen('login');
+        showAuthError('loginError', /expired|invalid/i.test(authLinkError)
+            ? 'This link has expired or was already used. Please request a new one.'
+            : authLinkError);
+        return;
+    }
+
     try {
         const session = await getSession();
-        if (session) {
+        if (session && isPasswordRecoveryLink) {
+            showPasswordReset();
+        } else if (session) {
             await enterApp(session);
         } else {
             showScreen('login');

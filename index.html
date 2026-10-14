@@ -40,7 +40,8 @@
             <h1 class="login-title">Guest messages</h1>
         </div>
 
-        <form id="loginForm" class="card login-card" novalidate>
+        <!-- Log in -->
+        <form id="loginForm" class="card login-card auth-form" novalidate>
             <label class="field">
                 <span class="field-label">Email</span>
                 <input type="email" id="loginEmail" class="input" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
@@ -54,7 +55,86 @@
             <div id="loginError" class="form-error" style="display: none;"></div>
 
             <button type="submit" id="loginBtn" class="btn btn-primary">Log in</button>
+
+            <div class="auth-links">
+                <button type="button" class="btn-text" data-auth-mode="forgot">Forgot password?</button>
+                <button type="button" class="btn-text" data-auth-mode="signup">Create account</button>
+            </div>
         </form>
+
+        <!-- Sign up -->
+        <form id="signupForm" class="card login-card auth-form" novalidate style="display: none;">
+            <label class="field">
+                <span class="field-label">Name</span>
+                <input type="text" id="signupName" class="input" autocomplete="name" placeholder="Your name" required>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input type="email" id="signupEmail" class="input" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Password</span>
+                <input type="password" id="signupPassword" class="input" autocomplete="new-password" placeholder="At least 8 characters" required>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Confirm password</span>
+                <input type="password" id="signupPasswordConfirm" class="input" autocomplete="new-password" placeholder="Repeat password" required>
+            </label>
+
+            <div id="signupError" class="form-error" style="display: none;"></div>
+
+            <button type="submit" id="signupBtn" class="btn btn-primary">Create account</button>
+
+            <div class="auth-links">
+                <button type="button" class="btn-text" data-auth-mode="login">Already have an account? Log in</button>
+            </div>
+        </form>
+
+        <!-- Forgot password -->
+        <form id="forgotForm" class="card login-card auth-form" novalidate style="display: none;">
+            <p class="auth-hint">Enter your email and we will send you a link to set a new password.</p>
+
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input type="email" id="forgotEmail" class="input" autocomplete="username" inputmode="email" autocapitalize="none" placeholder="you@example.com" required>
+            </label>
+
+            <div id="forgotError" class="form-error" style="display: none;"></div>
+
+            <button type="submit" id="forgotBtn" class="btn btn-primary">Send reset link</button>
+
+            <div class="auth-links">
+                <button type="button" class="btn-text" data-auth-mode="login">Back to log in</button>
+            </div>
+        </form>
+
+        <!-- Set a new password (opened from the reset link in the email) -->
+        <form id="resetForm" class="card login-card auth-form" novalidate style="display: none;">
+            <p class="auth-hint">Choose a new password for your account.</p>
+
+            <label class="field">
+                <span class="field-label">New password</span>
+                <input type="password" id="resetPassword" class="input" autocomplete="new-password" placeholder="At least 8 characters" required>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Confirm password</span>
+                <input type="password" id="resetPasswordConfirm" class="input" autocomplete="new-password" placeholder="Repeat password" required>
+            </label>
+
+            <div id="resetError" class="form-error" style="display: none;"></div>
+
+            <button type="submit" id="resetBtn" class="btn btn-primary">Save new password</button>
+        </form>
+
+        <!-- Success messages (e.g. "Check your email") -->
+        <div id="authStatus" class="card login-card auth-status" style="display: none;">
+            <p id="authStatusText" class="auth-status-text"></p>
+            <button type="button" class="btn btn-outline btn-medium" data-auth-mode="login">Back to log in</button>
+        </div>
     </div>
 
     <!-- Main application -->

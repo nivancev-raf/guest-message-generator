@@ -563,6 +563,31 @@ button:disabled {
     color: var(--ink);
 }
 
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 4px;
+}
+
+.auth-links .btn-text:only-child {
+    margin: 0 auto;
+}
+
+.auth-hint,
+.auth-status-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.auth-status-text {
+    font-weight: 600;
+    color: var(--ink);
+}
+
 /* ---------------------------------------------------------------------------
    App shell: top bar, content, sticky action, tab bar
    --------------------------------------------------------------------------- */
