@@ -169,7 +169,36 @@ function showToast(message, delay = 0) {
     }, motionDelay(delay));
 }
 
+// Stop the rubber-band bounce when pulling past the top (or bottom) of a screen.
+// CSS overscroll-behavior covers new browsers; this covers older iOS versions.
+function preventOverscroll() {
+    const viewport = document.getElementById('appViewport');
+    let startY = 0;
+    viewport.addEventListener('touchstart', event => {
+        startY = event.touches[0].clientY;
+    }, { passive: true });
+    viewport.addEventListener('touchmove', event => {
+        const scroller = event.target.closest('textarea, .view');
+        if (!scroller) return;
+        const pullingDown = event.touches[0].clientY > startY;
+        const atTop = scroller.scrollTop <= 0;
+        const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+        if ((pullingDown && atTop) || (!pullingDown && atBottom)) {
+            // A textarea at its edge hands the gesture to its screen
+            const view = scroller.closest('.view');
+            if (scroller !== view && view) {
+                const viewAtTop = view.scrollTop <= 0;
+                const viewAtBottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 1;
+                if (!((pullingDown && viewAtTop) || (!pullingDown && viewAtBottom))) return;
+            }
+            event.preventDefault();
+        }
+    }, { passive: false });
+}
+
 function initMenu() {
+    preventOverscroll();
+
     document.querySelectorAll('.tabbar .tab').forEach(tab => {
         tab.addEventListener('click', () => {
             // Tapping the active tab while a sub-screen is open pops back to its root

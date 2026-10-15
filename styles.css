@@ -55,6 +55,12 @@ html {
     -webkit-text-size-adjust: 100%;
 }
 
+/* No rubber-band bounce: pulling past the top must not drag the top bar down */
+html,
+body {
+    overscroll-behavior: none;
+}
+
 body {
     margin: 0;
     background: var(--bg);
@@ -636,7 +642,7 @@ button:disabled {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overscroll-behavior: none;
     scrollbar-width: none;
     background: var(--bg);
     /* Root views: inactive ones wait slightly lower, faded out */
