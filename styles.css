@@ -1095,8 +1095,12 @@ button:disabled {
     flex-direction: column;
 }
 
+/* Same frame as the editor, so switching to Edit does not move the text */
 .message-text {
-    font-size: 14.5px;
+    border: 1px solid var(--border-input);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
     line-height: 1.5;
     color: #1E1B16;
     white-space: pre-wrap;
@@ -1125,7 +1129,7 @@ button:disabled {
 .message-editor {
     display: block;
     width: 100%;
-    min-height: 240px;
+    min-height: 120px;
     border: 1px solid var(--border-input);
     border-radius: 10px;
     padding: 10px 12px;
