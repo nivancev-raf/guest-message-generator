@@ -496,6 +496,8 @@ function showGeneratedMessage(message, kicker, chips) {
     renderGeneratedMessage();
 
     resetCopyButton();
+    // Number for WhatsApp / Viber, prefilled from the form (garage info has no number field there)
+    document.getElementById('sendPhoneNumber').value = document.getElementById('phoneNumber').value;
     updateSendButtons();
     VIEWS.generated.kicker = kicker;
     showView('generated');
@@ -571,7 +573,14 @@ function undoMessageChanges() {
     }
 }
 
+// The number typed on "Ready to send" is the same one as in the form
+function handleSendPhoneInput() {
+    document.getElementById('phoneNumber').value = document.getElementById('sendPhoneNumber').value;
+    updateSendButtons();
+}
+
 function initMessageEditing() {
+    document.getElementById('sendPhoneNumber').addEventListener('input', handleSendPhoneInput);
     document.getElementById('editMessageBtn').addEventListener('click', toggleMessageEditor);
     document.getElementById('undoMessageBtn').addEventListener('click', undoMessageChanges);
     document.getElementById('outputEditor').addEventListener('input', handleMessageEdit);
