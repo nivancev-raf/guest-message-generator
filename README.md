@@ -84,7 +84,7 @@ Templates that are not customized fall back to the defaults in `templates.js`.
 4. **Set Dates**: Select check-in and check-out dates
 5. **Generate Message**: Click "Generate Message" to create the personalized text
 6. **Edit (optional)**: Tap *Edit* on the generated message to change just this message; the template stays as it is
-7. **Send Message**: Use one of the WhatsApp options or copy to clipboard
+7. **Send Message**: WhatsApp opens the chat with the message filled in. Viber copies the message and opens the chat with the guest, so you only paste and send. Or copy it to the clipboard
 8. **Tabs**: manage apartments, edit templates, change your name or log out
 
 ## 🌍 Browser Support

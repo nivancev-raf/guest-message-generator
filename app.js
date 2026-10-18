@@ -496,7 +496,7 @@ function showGeneratedMessage(message, kicker, chips) {
     renderGeneratedMessage();
 
     resetCopyButton();
-    updateWhatsAppButton();
+    updateSendButtons();
     VIEWS.generated.kicker = kicker;
     showView('generated');
     revealMessageLines();
@@ -558,7 +558,7 @@ function handleMessageEdit() {
     editor.style.height = `${editor.scrollHeight + 2}px`;
     document.getElementById('outputCount').textContent = `${generatedMessage.length} characters`;
     document.getElementById('undoMessageBtn').style.display = generatedMessage !== originalMessage ? 'inline-flex' : 'none';
-    updateWhatsAppButton();
+    updateSendButtons();
 }
 
 function undoMessageChanges() {
@@ -596,11 +596,41 @@ function copyToClipboard() {
     });
 }
 
-// WhatsApp button: needs a phone number
-function updateWhatsAppButton() {
+// WhatsApp and Viber buttons: need a phone number
+function updateSendButtons() {
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    document.getElementById('autoWhatsappBtn').disabled = !phoneNumber || !generatedMessage;
-    document.getElementById('whatsappSub').textContent = phoneNumber ? `to ${phoneNumber}` : 'Add a number first';
+    const sub = phoneNumber ? `to ${phoneNumber}` : 'Add a number first';
+    ['autoWhatsappBtn', 'viberBtn'].forEach(id => {
+        document.getElementById(id).disabled = !phoneNumber || !generatedMessage;
+    });
+    document.getElementById('whatsappSub').textContent = sub;
+    document.getElementById('viberSub').textContent = sub;
+}
+
+// International number with a leading +, without spaces, dashes or brackets
+function cleanPhoneNumber(phoneNumber) {
+    const digits = phoneNumber.replace(/[\s\-\(\)]/g, '').replace(/^00/, '+');
+    return digits.startsWith('+') ? digits : `+${digits}`;
+}
+
+// Viber cannot prefill a message for a phone number: copy it, then open the chat to paste it
+async function sendToViber() {
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    if (!phoneNumber || !generatedMessage) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(generatedMessage);
+        showToast('Message copied – paste it in Viber');
+    } catch (error) {
+        console.error('Copy failed', error);
+    }
+
+    const viberURL = `viber://chat?number=${encodeURIComponent(cleanPhoneNumber(phoneNumber))}`;
+    setTimeout(() => {
+        window.location.href = viberURL;
+    }, 400);
 }
 
 // Auto-send message via WhatsApp (redirects current tab)
@@ -661,7 +691,7 @@ function updateButtonStates() {
     document.getElementById('viewGenerator').classList.toggle('mode-garage', isGarage);
     document.getElementById('generateBtn').textContent = isGarage ? 'Generate garage info' : 'Generate message';
     updateNightsLabel();
-    updateWhatsAppButton();
+    updateSendButtons();
 }
 
 // Initialize application when DOM is loaded

@@ -134,6 +134,7 @@ function showView(name, options = {}) {
     const view = VIEWS[name];
     const previous = currentView;
     currentView = name;
+    document.getElementById('appScreen').dataset.view = name;
     setTopbar(view.title, view.kicker || 'SMARTHOST', name);
 
     if (name !== previous) {
