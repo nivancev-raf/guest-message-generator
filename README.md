@@ -30,7 +30,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 5. Optional: **Authentication → Email Templates** to translate the *Confirm signup* and *Reset password* emails
 6. **SQL Editor**: run [`supabase/schema.sql`](supabase/schema.sql). It also creates a trigger that adds a profile for every new account. Apartments are added by users in the app (or with a data script kept outside of the repository)
 7. **Project Settings → API**: put the API URL and the **Publishable key** (or the legacy `anon` key) into `config.js` — never the secret key (both are public by design; data is protected by login + RLS)
-8. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can ping the database every 3 days (free Supabase projects are paused after 7 days of inactivity)
+8. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can write a timestamp to the database every day (free Supabase projects are paused after 7 days of inactivity). The workflow only runs from the default branch (`main`)
 
 > Never commit apartment details, emails or passwords to this repository.
 
@@ -63,7 +63,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ├── sw.js               # Service Worker (network first, offline fallback)
 ├── manifest.json       # PWA manifest file
 ├── supabase/schema.sql # Database tables + Row Level Security policies
-├── .github/workflows/keepalive.yml  # Pings Supabase every 3 days
+├── .github/workflows/keepalive.yml  # Daily keep-alive write to Supabase
 ├── icon-192.png        # App icon (192x192)
 ├── icon-512.png        # App icon (512x512)
 └── README.md           # Project documentation

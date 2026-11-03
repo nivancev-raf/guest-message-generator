@@ -120,9 +120,34 @@ create policy "profiles_update_own" on public.profiles
 -- ---------------------------------------------------------------------------
 -- API access (needed when "Automatically expose new tables" is disabled).
 -- RLS above still limits every user to their own rows.
--- anon only gets SELECT for the keep-alive ping; with no anon policy it always sees 0 rows.
 -- ---------------------------------------------------------------------------
 grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on public.apartments to authenticated;
 grant select, update on public.profiles to authenticated;
-grant select on public.apartments to anon;
+-- The old keep-alive read the apartments table as anon; the write below replaces it
+revoke select on public.apartments from anon;
+
+-- ---------------------------------------------------------------------------
+-- Keep-alive: the GitHub workflow calls keepalive_ping() every day.
+-- A read that returns nothing did not stop the free project from being paused,
+-- so the ping writes a timestamp. anon can only call the function, not touch the table.
+-- ---------------------------------------------------------------------------
+create table if not exists public.keepalive (
+    id        integer primary key default 1 check (id = 1),
+    pinged_at timestamptz not null default now()
+);
+alter table public.keepalive enable row level security;
+
+create or replace function public.keepalive_ping()
+returns timestamptz
+language sql
+security definer
+set search_path = public
+as $$
+    insert into public.keepalive (id, pinged_at) values (1, now())
+    on conflict (id) do update set pinged_at = excluded.pinged_at
+    returning pinged_at;
+$$;
+
+revoke all on function public.keepalive_ping() from public;
+grant execute on function public.keepalive_ping() to anon;
