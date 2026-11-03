@@ -674,6 +674,7 @@ function clearAllFields() {
     originalMessage = '';
     document.getElementById('output').textContent = '';
     clearValidation();
+    updateDateFieldStates();
 }
 
 // Night count under the dates
@@ -700,7 +701,15 @@ function updateButtonStates() {
     document.getElementById('viewGenerator').classList.toggle('mode-garage', isGarage);
     document.getElementById('generateBtn').textContent = isGarage ? 'Generate garage info' : 'Generate message';
     updateNightsLabel();
+    updateDateFieldStates();
     updateSendButtons();
+}
+
+// iPhone shows its own "dd/mm/yyyy" placeholder only while a date field is empty
+function updateDateFieldStates() {
+    document.querySelectorAll('.date-wrap').forEach(wrap => {
+        wrap.classList.toggle('is-empty', !wrap.querySelector('input').value);
+    });
 }
 
 // Initialize application when DOM is loaded
