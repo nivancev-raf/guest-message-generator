@@ -43,7 +43,8 @@
     --ease-ios: cubic-bezier(.32, .72, 0, 1);
     --ease-out: cubic-bezier(.2, .8, .2, 1);
     --dur-push: 420ms;
-    --dur-tab: 220ms;
+    --dur-tab: 350ms;
+    --dur-tab-out: 200ms;
     --dur-pill: 340ms;
 }
 
@@ -707,8 +708,9 @@ button:disabled {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(8px);
-    transition: opacity var(--dur-tab) ease, transform var(--dur-tab) var(--ease-out), visibility 0s linear var(--dur-tab);
+    transform: translateY(12px);
+    /* Outgoing screen fades out quickly ... */
+    transition: opacity var(--dur-tab-out) ease, transform var(--dur-tab-out) var(--ease-out), visibility 0s linear var(--dur-tab-out);
 }
 
 .view::-webkit-scrollbar {
@@ -721,6 +723,7 @@ button:disabled {
     visibility: visible;
     pointer-events: auto;
     transform: none;
+    /* ... the incoming one fades in and rises more slowly */
     transition: opacity var(--dur-tab) ease, transform var(--dur-tab) var(--ease-out), visibility 0s;
 }
 
