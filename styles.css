@@ -914,6 +914,23 @@ button:disabled {
     gap: 10px;
 }
 
+.action-note {
+    grid-column: 1 / -1;
+    margin: -2px 0 0;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--text-muted);
+}
+
+.action-note svg {
+    flex-shrink: 0;
+    color: #8E7CF0;
+}
+
 .action-grid .btn-copy {
     grid-column: 1 / -1;
     height: 46px;
@@ -1025,7 +1042,7 @@ button:disabled {
 
 /* "Ready to send" has two rows of buttons: keep the toast above them */
 .app-screen[data-view="generated"] .toast {
-    bottom: calc(var(--tabbar-height) + 140px);
+    bottom: calc(var(--tabbar-height) + 172px);
 }
 
 .toast.is-visible {
