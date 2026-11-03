@@ -622,6 +622,11 @@ function cleanPhoneNumber(phoneNumber) {
     return digits.startsWith('+') ? digits : `+${digits}`;
 }
 
+function isIOS() {
+    return /iPhone|iPad|iPod/.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 // Viber cannot prefill a message for a phone number: copy it, then open the chat to paste it
 async function sendToViber() {
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
@@ -636,7 +641,11 @@ async function sendToViber() {
         console.error('Copy failed', error);
     }
 
-    const viberURL = `viber://chat?number=${encodeURIComponent(cleanPhoneNumber(phoneNumber))}`;
+    // iPhone Viber rejects "+" / "%2B" in the number ("Request Unavailable"); Android expects it
+    const number = cleanPhoneNumber(phoneNumber);
+    const viberURL = isIOS()
+        ? `viber://chat?number=${number.slice(1)}`
+        : `viber://chat?number=${encodeURIComponent(number)}`;
     setTimeout(() => {
         window.location.href = viberURL;
     }, 400);
