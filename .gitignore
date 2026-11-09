@@ -1,2 +1,5 @@
 private/
 .DS_Store
+
+# /brag intermediates (frames, stills, app copy, raw renders)
+brag-output/work/

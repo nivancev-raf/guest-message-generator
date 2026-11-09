@@ -1,0 +1,3 @@
+Every booking used to mean typing the same long welcome message again: address, entrance, floor, parking spot, check-in times. So I built SmartHost Guest Messages. Fill in the guest, the dates and the price, and the whole message is written, in Serbian or English, one tap from WhatsApp or Viber.
+
+Create an account and add it to your home screen: https://nivancev-raf.github.io/guest-message-generator/
