@@ -180,16 +180,33 @@
                     </div>
 
                     <div class="section res-only">
-                        <div class="section-label">GUEST</div>
+                        <div class="message-header">
+                            <span class="section-label section-label-inline">GUEST</span>
+                            <span class="spacer"></span>
+                            <button type="button" id="clearGuestBtn" class="btn-text btn-icon-text" onclick="clearGuest()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                                Clear guest
+                            </button>
+                        </div>
                         <div class="card">
                             <label class="field">
                                 <span class="field-label">Name</span>
-                                <input type="text" id="guestName" class="input" placeholder="Guest name" oninput="clearValidation()">
+                                <div class="input-clear-wrap">
+                                    <input type="text" id="guestName" class="input input-with-clear" placeholder="Guest name" oninput="clearValidation()">
+                                    <button type="button" class="input-clear" aria-label="Clear name" tabindex="-1" data-clear="guestName">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                                    </button>
+                                </div>
                                 <span id="guestNameError" class="field-error-text"></span>
                             </label>
                             <label class="field">
                                 <span class="field-label">Mobile number</span>
-                                <input type="tel" id="phoneNumber" class="input" placeholder="+381 6x xxx xxxx" oninput="clearValidation()">
+                                <div class="input-clear-wrap">
+                                    <input type="tel" id="phoneNumber" class="input input-with-clear" placeholder="+381 6x xxx xxxx" oninput="clearValidation()">
+                                    <button type="button" class="input-clear" aria-label="Clear mobile number" tabindex="-1" data-clear="phoneNumber">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                                    </button>
+                                </div>
                                 <span id="phoneNumberError" class="field-error-text"></span>
                                 <span class="helper">Include the country code, e.g. +381</span>
                             </label>
@@ -267,10 +284,9 @@
                 <div class="view-content view-content-tight">
                     <div id="generatedChips" class="chips"></div>
                     <div class="message-bubble">
-                        <div id="output" class="message-text"></div>
+                        <div id="output" class="message-text" role="textbox" tabindex="0" aria-label="Message – tap to edit"></div>
                         <textarea id="outputEditor" class="message-editor" aria-label="Edit message" style="display: none;"></textarea>
                         <div class="message-footer">
-                            <button type="button" id="editMessageBtn" class="btn-text">Edit</button>
                             <button type="button" id="undoMessageBtn" class="btn-text btn-text-muted" style="display: none;">Undo changes</button>
                             <span class="spacer"></span>
                             <span id="outputCount" class="message-count"></span>

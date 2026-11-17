@@ -1,4 +1,4 @@
-const CACHE_NAME = 'guest-message-generator-v13';
+const CACHE_NAME = 'guest-message-generator-v14';
 const urlsToCache = [
   '/guest-message-generator/',
   '/guest-message-generator/index.html',

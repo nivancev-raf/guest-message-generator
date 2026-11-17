@@ -527,37 +527,99 @@ function isEditingMessage() {
     return document.getElementById('outputEditor').style.display !== 'none';
 }
 
-function openMessageEditor() {
+// Where a tap landed in the formatted message, as an offset in the raw text
+// (bold parts are shown without their *asterisks*, lines are separate elements)
+function rawOffsetFromPoint(x, y) {
+    let node, offset;
+    if (document.caretRangeFromPoint) {
+        const range = document.caretRangeFromPoint(x, y);
+        if (!range) return null;
+        node = range.startContainer;
+        offset = range.startOffset;
+    } else if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(x, y);
+        if (!pos) return null;
+        node = pos.offsetNode;
+        offset = pos.offset;
+    } else {
+        return null;
+    }
+
+    const output = document.getElementById('output');
+    const lineEl = node.nodeType === Node.ELEMENT_NODE && node.classList.contains('message-line')
+        ? node
+        : node.parentElement && node.parentElement.closest('.message-line');
+    if (!lineEl || !output.contains(lineEl)) return null;
+
+    const lines = generatedMessage.split('\n');
+    const lineIndex = Array.prototype.indexOf.call(output.children, lineEl);
+    let raw = 0;
+    for (let i = 0; i < lineIndex; i++) raw += lines[i].length + 1;
+
+    // Caret between child nodes of the line
+    if (node === lineEl) {
+        Array.from(lineEl.childNodes).slice(0, offset).forEach(child => {
+            raw += child.textContent.length + (child.nodeName === 'STRONG' ? 2 : 0);
+        });
+        return raw;
+    }
+
+    for (const child of lineEl.childNodes) {
+        const isBold = child.nodeName === 'STRONG';
+        if (child === node || child.contains(node)) {
+            return raw + (isBold ? 1 : 0) + offset;
+        }
+        raw += child.textContent.length + (isBold ? 2 : 0);
+    }
+    return raw;
+}
+
+function resizeMessageEditor() {
     const editor = document.getElementById('outputEditor');
-    editor.value = generatedMessage;
-    document.getElementById('output').style.display = 'none';
-    editor.style.display = 'block';
     editor.style.height = 'auto';
     editor.style.height = `${editor.scrollHeight + 2}px`;
-    document.getElementById('editMessageBtn').textContent = 'Done';
-    editor.focus();
+}
+
+// Swap the formatted text for the editor in place; must run inside the tap so iPhone opens the keyboard
+function openMessageEditor(caret) {
+    if (isEditingMessage()) return;
+    const output = document.getElementById('output');
+    const editor = document.getElementById('outputEditor');
+    const scrollParent = output.closest('.view-content');
+    const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
+
+    editor.value = generatedMessage;
+    output.style.display = 'none';
+    editor.style.display = 'block';
+    resizeMessageEditor();
+
+    const position = caret == null ? generatedMessage.length : Math.min(caret, generatedMessage.length);
+    editor.focus({ preventScroll: true });
+    editor.setSelectionRange(position, position);
+    if (scrollParent) scrollParent.scrollTop = scrollTop;
 }
 
 function closeMessageEditor() {
     document.getElementById('outputEditor').style.display = 'none';
     document.getElementById('output').style.display = 'block';
-    document.getElementById('editMessageBtn').textContent = 'Edit';
 }
 
-function toggleMessageEditor() {
-    if (isEditingMessage()) {
-        closeMessageEditor();
-        renderGeneratedMessage();
-    } else {
-        openMessageEditor();
-    }
+function handleMessageTap(event) {
+    // Let a text selection (long press / drag) stand
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    openMessageEditor(rawOffsetFromPoint(event.clientX, event.clientY));
+}
+
+function handleMessageEditorBlur() {
+    closeMessageEditor();
+    renderGeneratedMessage();
 }
 
 function handleMessageEdit() {
     const editor = document.getElementById('outputEditor');
     generatedMessage = editor.value;
-    editor.style.height = 'auto';
-    editor.style.height = `${editor.scrollHeight + 2}px`;
+    resizeMessageEditor();
     document.getElementById('outputCount').textContent = `${generatedMessage.length} characters`;
     document.getElementById('undoMessageBtn').style.display = generatedMessage !== originalMessage ? 'inline-flex' : 'none';
     updateSendButtons();
@@ -576,14 +638,27 @@ function undoMessageChanges() {
 // The number typed on "Ready to send" is the same one as in the form
 function handleSendPhoneInput() {
     document.getElementById('phoneNumber').value = document.getElementById('sendPhoneNumber').value;
+    updateClearGuestStates();
     updateSendButtons();
 }
 
 function initMessageEditing() {
     document.getElementById('sendPhoneNumber').addEventListener('input', handleSendPhoneInput);
-    document.getElementById('editMessageBtn').addEventListener('click', toggleMessageEditor);
-    document.getElementById('undoMessageBtn').addEventListener('click', undoMessageChanges);
-    document.getElementById('outputEditor').addEventListener('input', handleMessageEdit);
+    const output = document.getElementById('output');
+    output.addEventListener('click', handleMessageTap);
+    output.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openMessageEditor(null);
+        }
+    });
+    // Keep the editor open (and focused) while tapping Undo
+    const undoBtn = document.getElementById('undoMessageBtn');
+    undoBtn.addEventListener('pointerdown', event => event.preventDefault());
+    undoBtn.addEventListener('click', undoMessageChanges);
+    const editor = document.getElementById('outputEditor');
+    editor.addEventListener('input', handleMessageEdit);
+    editor.addEventListener('blur', handleMessageEditorBlur);
 }
 
 function resetCopyButton() {
@@ -656,6 +731,38 @@ function autoSendToWhatsApp() {
     window.location.href = whatsappURL;
 }
 
+// Clear only the guest (name and mobile number) for the next reservation
+function clearGuest() {
+    document.getElementById('guestName').value = '';
+    document.getElementById('phoneNumber').value = '';
+    clearValidation();
+}
+
+// The small x inside a field clears just that field
+function initInputClearButtons() {
+    document.querySelectorAll('.input-clear').forEach(button => {
+        const input = document.getElementById(button.dataset.clear);
+        // Keep focus in the field, so the x does not vanish before the tap lands
+        button.addEventListener('pointerdown', event => event.preventDefault());
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            input.value = '';
+            input.focus();
+            clearValidation();
+        });
+    });
+}
+
+function updateClearGuestStates() {
+    let hasGuest = false;
+    document.querySelectorAll('.input-clear-wrap').forEach(wrap => {
+        const hasValue = !!wrap.querySelector('input').value;
+        wrap.classList.toggle('has-value', hasValue);
+        hasGuest = hasGuest || hasValue;
+    });
+    document.getElementById('clearGuestBtn').classList.toggle('is-hidden', !hasGuest);
+}
+
 // Clear all form fields
 function clearAllFields() {
     document.getElementById('apartmentSelect').value = getDefaultApartmentId();
@@ -702,6 +809,7 @@ function updateButtonStates() {
     document.getElementById('generateBtn').textContent = isGarage ? 'Generate garage info' : 'Generate message';
     updateNightsLabel();
     updateDateFieldStates();
+    updateClearGuestStates();
     updateSendButtons();
 }
 
@@ -732,6 +840,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initAuthForms();
     initMenu();
     initMessageEditing();
+    initInputClearButtons();
     showView('generator', { force: true });
     initApartments();
     initMessagesEditor();
