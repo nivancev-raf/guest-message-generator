@@ -16,6 +16,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 - **Apartment management**: Add, edit and delete apartments directly in the app
 - **Per-apartment messages**: Reservation and garage messages can be edited per apartment, language and message type
 - **My profile**: Change the name shown in the greeting
+- **Free trial + subscription**: 7 days free, then €5 / month through Lemon Squeezy, unlocked automatically
 - **Message Generation**: Automatically generate personalized welcome messages (Serbian / English)
 - **WhatsApp Integration**: Send messages directly via WhatsApp
 - **PWA Support**: Install as a mobile app ("Add to Home Screen")
@@ -33,6 +34,66 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 8. **GitHub → Settings → Secrets and variables → Actions**: add `SUPABASE_URL` and `SUPABASE_ANON_KEY` so the keep-alive workflow can write a timestamp to the database every day (free Supabase projects are paused after 7 days of inactivity). The workflow only runs from the default branch (`main`)
 
 > Never commit apartment details, emails or passwords to this repository.
+
+## 💳 Payments (7-day free trial, then €5 / month via Lemon Squeezy)
+
+How it works: every new account gets 7 free days. After that, tapping **Generate** opens a
+"Your free trial has ended" sheet; apartments and templates stay viewable. **Subscribe** opens the
+Lemon Squeezy checkout with the user's account id attached. When the payment goes through, Lemon
+Squeezy calls the `lemon-squeezy-webhook` Edge Function, which writes the subscription into
+`public.subscriptions` and the app unlocks within a few seconds. Renewals, cancellations and failed
+payments arrive the same way. Users can only *read* their own subscription row.
+
+Accounts that exist when you run the SQL below stay **free forever**.
+Until `LEMON_SQUEEZY_CHECKOUT_URL` is filled in `config.js`, payments are off and nobody is blocked.
+
+### 1. Database
+**SQL Editor**: run the updated [`supabase/schema.sql`](supabase/schema.sql) (safe to run again).
+It adds the `subscriptions` table, starts a trial for every new sign-up and marks all existing accounts
+as free forever.
+
+### 2. Lemon Squeezy (in **Test mode** first)
+1. Create the store, then **Products → New product**: name `SmartHost Monthly`, pricing
+   **Subscription**, €5, every 1 month. Publish it.
+2. Optional: in the product's **Confirmation modal**, set the button link to
+   `https://nivancev-raf.github.io/guest-message-generator/?subscribed=1`
+3. Copy the product's checkout link (**Share**), it looks like `https://YOUR-STORE.lemonsqueezy.com/buy/...`
+
+### 3. Edge Function (Supabase)
+1. **Edge Functions → Deploy a new function → Via Editor**, name it exactly `lemon-squeezy-webhook`,
+   paste the contents of [`supabase/functions/lemon-squeezy-webhook/index.ts`](supabase/functions/lemon-squeezy-webhook/index.ts), deploy.
+   (CLI alternative: `supabase functions deploy lemon-squeezy-webhook --no-verify-jwt`)
+2. In the function's **Details / Settings**, turn **off** *Enforce JWT verification*
+   (Lemon Squeezy cannot send a Supabase login; every call is checked with the signing secret instead).
+3. Its URL is `https://YOUR-PROJECT.supabase.co/functions/v1/lemon-squeezy-webhook`
+
+### 4. Connect the two
+1. Lemon Squeezy **Settings → Webhooks → +**: the function URL above, a long random **Signing secret**,
+   and the events `subscription_created`, `subscription_updated`, `subscription_cancelled`,
+   `subscription_resumed`, `subscription_expired`, `subscription_paused`, `subscription_unpaused`.
+2. Supabase **Edge Functions → Secrets**: add
+   - `LEMONSQUEEZY_WEBHOOK_SECRET` = the same signing secret
+   - `LEMONSQUEEZY_TEST_MODE` = `true` (only while testing)
+
+### 5. Test (on your computer, not on the live site)
+1. In `config.js` set `LEMON_SQUEEZY_CHECKOUT_URL` to the **test** checkout link and
+   `LEMON_SQUEEZY_PORTAL_URL` to `https://YOUR-STORE.lemonsqueezy.com/billing`.
+   **Do not commit the test link**: anyone could "pay" with a test card. Run the app locally instead
+   (`python -m http.server 8000`, open `http://localhost:8000/`).
+2. Sign up with a test account, then end its trial in the **SQL Editor**:
+   `update public.subscriptions set trial_ends_at = now() where user_id = (select id from auth.users where email = 'TEST@EMAIL');`
+3. Tap Generate → Subscribe, pay with card `4242 4242 4242 4242`, any future date, any CVC.
+   The app unlocks a few seconds later; Profile shows the plan. Lemon Squeezy → Webhooks shows each delivery.
+
+### 6. Go live
+1. Get the store approved (**Activate store**). Lemon Squeezy reviews a public website with a
+   description, pricing, Terms / Privacy / Refund pages and a contact email.
+2. Copy the product to live mode and create the webhook again **in live mode** (same URL and secret).
+3. Put the **live** checkout link and the portal link in `config.js`, commit and deploy.
+4. Delete the `LEMONSQUEEZY_TEST_MODE` secret, so test purchases can never unlock a real account.
+
+> Messages are generated in the browser, so a technical user could get around the paywall.
+> The payment records themselves cannot be faked.
 
 ## 📱 Installation
 
@@ -57,12 +118,14 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 ├── apartments.js       # Apartment list + add / edit / delete form
 ├── editor.js           # Templates view (apartment, language, message type)
 ├── profile.js          # Profile view (display name, log out)
+├── subscription.js     # Free trial banner, paywall sheet, Plan card in Profile
 ├── app.js              # Main application logic and DOM manipulation
 ├── utils.js            # Date formatting helpers
 ├── pwa.js              # Progressive Web App functionality
 ├── sw.js               # Service Worker (network first, offline fallback)
 ├── manifest.json       # PWA manifest file
 ├── supabase/schema.sql # Database tables + Row Level Security policies
+├── supabase/functions/lemon-squeezy-webhook/index.ts  # Unlocks accounts when Lemon Squeezy reports a payment
 ├── .github/workflows/keepalive.yml  # Daily keep-alive write to Supabase
 ├── icon-192.png        # App icon (192x192)
 ├── icon-512.png        # App icon (512x512)

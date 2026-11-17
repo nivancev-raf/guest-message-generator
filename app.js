@@ -204,6 +204,7 @@ function resetAppState() {
     currentUser = null;
     currentProfile = null;
     apartments = [];
+    resetSubscriptionState();
     populateApartmentSelect();
     clearAllFields();
 }
@@ -223,7 +224,8 @@ async function loadUserData() {
     try {
         const [profile, apartmentList] = await Promise.all([
             fetchProfile(currentUser.id),
-            fetchApartments()
+            fetchApartments(),
+            loadSubscription()
         ]);
         currentProfile = profile;
         apartments = apartmentList;
@@ -235,6 +237,7 @@ async function loadUserData() {
     }
 
     updateGreeting();
+    afterSubscriptionLoaded();
 
     populateApartmentSelect();
     selectDefaultApartment();
@@ -388,7 +391,13 @@ let generating = false;
 
 // Short "Generating…" state, then the preview slides in
 function handleGenerate() {
-    if (generating || !validateForm()) return;
+    if (generating) return;
+    // Trial over and not subscribed: the paywall sheet instead of a message
+    if (!hasGenerateAccess()) {
+        openPaywall();
+        return;
+    }
+    if (!validateForm()) return;
 
     const generateBtn = document.getElementById('generateBtn');
     generating = true;
@@ -854,6 +863,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initApartments();
     initMessagesEditor();
     initProfile();
+    initSubscription();
     document.getElementById('retryLoadBtn').addEventListener('click', loadUserData);
     
     // Initial button state update

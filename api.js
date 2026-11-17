@@ -25,6 +25,17 @@ async function updateProfile(userId, changes) {
     return data;
 }
 
+// Free trial / subscription state of the logged in user (read-only for users)
+async function fetchSubscription(userId) {
+    const { data, error } = await supabaseClient
+        .from('subscriptions')
+        .select('trial_ends_at, free_forever, status, renews_at, ends_at, card_brand, card_last_four')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (error) throw error;
+    return data;
+}
+
 // Apartments of the logged in user (RLS returns only their own)
 async function fetchApartments() {
     const { data, error } = await supabaseClient

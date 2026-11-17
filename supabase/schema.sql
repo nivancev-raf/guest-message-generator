@@ -41,6 +41,27 @@ create table if not exists public.profiles (
 );
 
 -- ---------------------------------------------------------------------------
+-- Subscriptions: free trial + Lemon Squeezy subscription state, one row per user.
+-- Users can only READ their own row. Only the lemon-squeezy-webhook Edge Function
+-- (service role) changes it, so nobody can make themselves "paid" from the browser.
+-- ---------------------------------------------------------------------------
+create table if not exists public.subscriptions (
+    user_id            uuid primary key references auth.users (id) on delete cascade,
+    trial_ends_at      timestamptz not null default (now() + interval '7 days'),
+    free_forever       boolean not null default false,  -- accounts from before payments existed
+    -- Lemon Squeezy status: on_trial, active, paused, past_due, unpaid, cancelled, expired
+    status             text,
+    renews_at          timestamptz,                     -- next payment
+    ends_at            timestamptz,                     -- access ends (cancelled / expired)
+    card_brand         text,
+    card_last_four     text,
+    ls_subscription_id text unique,
+    ls_customer_id     text,
+    ls_updated_at      timestamptz,                     -- ignores webhooks that arrive out of order
+    updated_at         timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
 -- Keep updated_at fresh
 -- ---------------------------------------------------------------------------
 create or replace function public.set_updated_at()
@@ -56,6 +77,11 @@ $$;
 drop trigger if exists apartments_set_updated_at on public.apartments;
 create trigger apartments_set_updated_at
     before update on public.apartments
+    for each row execute function public.set_updated_at();
+
+drop trigger if exists subscriptions_set_updated_at on public.subscriptions;
+create trigger subscriptions_set_updated_at
+    before update on public.subscriptions
     for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
@@ -75,6 +101,10 @@ begin
         coalesce(nullif(trim(new.raw_user_meta_data ->> 'display_name'), ''), split_part(new.email, '@', 1))
     )
     on conflict (id) do nothing;
+    -- Every new account starts a 7-day free trial (table defined below)
+    insert into public.subscriptions (user_id)
+    values (new.id)
+    on conflict (user_id) do nothing;
     return new;
 end;
 $$;
@@ -89,11 +119,18 @@ insert into public.profiles (id, display_name)
 select id, split_part(email, '@', 1) from auth.users
 on conflict (id) do nothing;
 
+-- Accounts that existed before payments were added stay free forever.
+-- Safe to re-run: accounts that already have a row (everyone signed up since) are skipped.
+insert into public.subscriptions (user_id, free_forever)
+select id, true from auth.users
+on conflict (user_id) do nothing;
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security: every user sees and edits only their own rows
 -- ---------------------------------------------------------------------------
 alter table public.apartments enable row level security;
 alter table public.profiles   enable row level security;
+alter table public.subscriptions enable row level security;
 
 drop policy if exists "apartments_select_own" on public.apartments;
 drop policy if exists "apartments_insert_own" on public.apartments;
@@ -117,6 +154,11 @@ create policy "profiles_select_own" on public.profiles
 create policy "profiles_update_own" on public.profiles
     for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
 
+-- Read-only for users: there is deliberately no insert / update / delete policy
+drop policy if exists "subscriptions_select_own" on public.subscriptions;
+create policy "subscriptions_select_own" on public.subscriptions
+    for select to authenticated using (user_id = auth.uid());
+
 -- ---------------------------------------------------------------------------
 -- API access (needed when "Automatically expose new tables" is disabled).
 -- RLS above still limits every user to their own rows.
@@ -124,6 +166,8 @@ create policy "profiles_update_own" on public.profiles
 grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on public.apartments to authenticated;
 grant select, update on public.profiles to authenticated;
+revoke all on public.subscriptions from anon, authenticated;
+grant select on public.subscriptions to authenticated;
 -- The old keep-alive read the apartments table as anon; the write below replaces it
 revoke select on public.apartments from anon;
 

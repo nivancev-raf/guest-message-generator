@@ -1599,3 +1599,354 @@ button:disabled {
         transition: opacity 200ms ease !important;
     }
 }
+
+/* ---------------------------------------------------------------------------
+   Free trial + subscription (subscription.js)
+   --------------------------------------------------------------------------- */
+
+[hidden] {
+    display: none !important;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-divider);
+}
+
+.badge-success {
+    color: var(--success);
+    background: #E3EFE7;
+}
+
+.badge-danger {
+    color: var(--danger);
+    background: #F7E3DF;
+}
+
+.badge-neutral {
+    color: var(--text-muted);
+    background: var(--border-divider);
+}
+
+.trial-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: #E9D5B0;
+    overflow: hidden;
+}
+
+.trial-bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: var(--bronze);
+    transition: width 500ms var(--ease-out);
+}
+
+.trial-bar-light {
+    background: var(--border-divider);
+}
+
+.trial-bar-light .trial-bar-fill {
+    background: var(--gold);
+}
+
+/* A1: banner on top of the Generate screen */
+.trial-banner {
+    background: var(--badge-bg);
+    border: 1px solid #E9D5B0;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.trial-banner.is-warning {
+    background: #FBF0EC;
+    border-color: #EFCFC6;
+}
+
+.trial-banner-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.trial-banner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.trial-banner-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--badge-text);
+}
+
+.trial-banner.is-warning .trial-banner-kicker {
+    color: var(--danger);
+}
+
+.trial-banner-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.trial-banner-note {
+    font-size: 12px;
+    color: var(--badge-text);
+}
+
+.trial-banner.is-warning .trial-banner-note {
+    color: #7D3A2E;
+}
+
+.trial-banner.is-warning .trial-bar {
+    background: #EFCFC6;
+}
+
+.trial-banner.is-warning .trial-bar-fill {
+    background: var(--danger);
+}
+
+.btn-compact-dark {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--ink);
+    color: #F3E7CF;
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform .15s ease;
+}
+
+.btn-compact-dark:active {
+    transform: scale(.97);
+}
+
+/* B1 / B2: Plan card in Profile */
+.plan-head,
+.plan-row,
+.plan-dates {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.plan-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.plan-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.plan-dates {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.plan-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.plan-rows:empty {
+    display: none;
+}
+
+.plan-row {
+    font-size: 14px;
+}
+
+.plan-row-label {
+    font-weight: 600;
+    color: var(--text-body);
+}
+
+.plan-row-value {
+    color: var(--text-body);
+    text-align: right;
+}
+
+.plan-row-value strong {
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.plan-note {
+    margin-top: -6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.plan-note:empty {
+    display: none;
+}
+
+/* A2: paywall bottom sheet */
+.sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: rgba(14, 13, 11, .55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 300ms ease, visibility 0s linear 300ms;
+}
+
+.sheet-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 300ms ease, visibility 0s;
+}
+
+.sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 51;
+    max-height: 92%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    border-radius: 24px 24px 0 0;
+    padding: 10px 20px max(24px, calc(env(safe-area-inset-bottom) + 12px));
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 -18px 40px -20px rgba(14, 13, 11, .45);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform var(--dur-push) var(--ease-ios), visibility 0s linear var(--dur-push);
+}
+
+.sheet.is-open {
+    transform: translateY(0);
+    visibility: visible;
+    transition: transform var(--dur-push) var(--ease-ios), visibility 0s;
+}
+
+.sheet-handle {
+    width: 40px;
+    height: 5px;
+    border-radius: 3px;
+    background: #D9D2C4;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.sheet-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.sheet-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--badge-bg);
+    color: var(--bronze);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sheet-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.sheet-text {
+    margin: 0;
+    max-width: 300px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.plan-offer {
+    background: var(--surface);
+    border: 1.5px solid var(--gold);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.plan-offer-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.plan-offer-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.plan-offer-price {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.plan-offer-per {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.plan-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-body);
+}
+
+.plan-feature svg {
+    flex-shrink: 0;
+    color: var(--success);
+}
+
+.sheet-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.sheet-dismiss {
+    height: 44px;
+    font-size: 14px;
+}
+
+.sheet-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
