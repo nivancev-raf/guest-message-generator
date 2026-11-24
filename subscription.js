@@ -1,23 +1,25 @@
-// Free trial + monthly subscription (Lemon Squeezy)
+// Free trial + monthly subscription (Polar)
 //
-// The state comes from public.subscriptions, which only the lemon-squeezy-webhook
-// Edge Function can change. The app only reads it, shows the trial banner / Plan card,
-// and opens the paywall sheet when someone without access taps Generate.
+// The state comes from public.subscriptions, which only the polar-webhook Edge Function
+// can change. The app only reads it, shows the trial banner / Plan card, and opens the
+// paywall sheet when someone without access taps Generate. The payment page and the
+// subscription page come from the polar-checkout Edge Function (it holds the Polar keys).
 
 let currentSubscription = null; // row of public.subscriptions; null = not loaded / no payments
 let paymentPollTimer = null;
 let paymentPollUntil = 0;
 let paywallReturnFocus = null;
+let openingPolarPage = false;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAYMENT_POLL_MS = 4000;
 const PAYMENT_POLL_WINDOW_MS = 10 * 60 * 1000;
 
-// The checkout's confirmation button can link back to the app with ?subscribed=1
+// After paying, Polar sends people back to the app with ?subscribed=1
 const returnedFromCheckout = new URLSearchParams(window.location.search).has('subscribed');
 
 function paymentsEnabled() {
-    return !!LEMON_SQUEEZY_CHECKOUT_URL;
+    return PAYMENTS_ENABLED === true;
 }
 
 // 'none'        payments off, or the state could not be loaded: nobody is blocked
@@ -26,7 +28,7 @@ function paymentsEnabled() {
 // 'trial_ended' trial over, never subscribed
 // 'active'      paying
 // 'cancelled'   cancelled, but the paid month is not over yet
-// 'past_due'    a renewal payment failed; Lemon Squeezy retries it
+// 'past_due'    a renewal payment failed; Polar retries it
 // 'expired'     had a subscription that ended (expired, unpaid, paused or cancelled and over)
 function getPlanState() {
     const sub = currentSubscription;
@@ -144,7 +146,7 @@ function renderTrialBanner() {
         note.textContent = 'We will retry the payment. Update your card to keep generating messages.';
         button.textContent = 'Update';
         button.dataset.action = 'portal';
-        button.hidden = !LEMON_SQUEEZY_PORTAL_URL;
+        button.hidden = false;
         return;
     } else {
         banner.classList.add('is-warning');
@@ -205,8 +207,6 @@ function renderPlanCard() {
         button.textContent = label;
         button.dataset.action = action;
         button.className = `btn btn-medium ${style === 'outline' ? 'btn-outline' : 'btn-primary'}`;
-        // Without a portal link there is nowhere to manage the subscription
-        if (action === 'portal' && !LEMON_SQUEEZY_PORTAL_URL) button.hidden = true;
     };
     const price = () => addPlanRow(rows, 'Price', ' / month', PLAN_PRICE);
 
@@ -299,41 +299,84 @@ function closePaywall() {
     if (paywallReturnFocus && paywallReturnFocus.focus) paywallReturnFocus.focus({ preventScroll: true });
 }
 
-// --- Lemon Squeezy pages ---
+// --- Polar pages (links come from the polar-checkout Edge Function) ---
 
-function openExternal(url) {
-    // New tab / in-app browser keeps the app open; when blocked, go there directly
-    const opened = window.open(url, '_blank');
-    if (opened) {
-        opened.opener = null;
-    } else {
-        window.location.href = url;
+function isStandaloneApp() {
+    return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+
+// Error code the function sent back ('already_subscribed', 'no_customer', ...)
+async function polarErrorCode(error) {
+    try {
+        const body = await error.context.json();
+        return body && body.error;
+    } catch {
+        return null;
     }
 }
 
-function startCheckout() {
-    if (!paymentsEnabled() || !currentUser) return;
-    const url = new URL(LEMON_SQUEEZY_CHECKOUT_URL);
-    // The webhook finds the account by this id
-    url.searchParams.set('checkout[custom][user_id]', currentUser.id);
-    url.searchParams.set('checkout[email]', currentUser.email);
-    const name = getDisplayName();
-    if (name) url.searchParams.set('checkout[name]', name);
-    openExternal(url.toString());
-    awaitPayment();
+// The link arrives from the server a moment after the tap. Browsers only allow a new tab
+// during the tap itself, so open it right away and send it to the link when it arrives.
+// The home screen app goes there in place: Polar brings it back to the app afterwards.
+async function openPolarPage(action, button) {
+    if (!paymentsEnabled() || !currentUser || openingPolarPage) return;
+    openingPolarPage = true;
+    const label = button ? button.textContent : '';
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Opening…';
+    }
+    const tab = isStandaloneApp() ? null : window.open('', '_blank');
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('polar-checkout', {
+            body: { action, returnUrl: APP_URL }
+        });
+        if (error) throw error;
+        if (!data || !data.url) throw new Error('No link in the answer');
+        if (tab && !tab.closed) {
+            tab.opener = null;
+            tab.location.href = data.url;
+        } else {
+            window.location.href = data.url;
+        }
+        // Paying, cancelling or changing the card comes back through the webhook
+        awaitPayment();
+    } catch (error) {
+        if (tab) tab.close();
+        console.error(`Opening the Polar ${action} page failed`, error);
+        const code = await polarErrorCode(error);
+        if (code === 'already_subscribed') {
+            closePaywall();
+            await refreshSubscription();
+            showToast('You already have a subscription');
+        } else if (code === 'no_customer') {
+            showToast('No subscription to manage yet');
+        } else {
+            showToast('Could not open it. Try again.');
+        }
+    } finally {
+        openingPolarPage = false;
+        if (button) {
+            button.disabled = false;
+            button.textContent = label;
+        }
+    }
 }
 
-function openBillingPortal() {
-    if (LEMON_SQUEEZY_PORTAL_URL) openExternal(LEMON_SQUEEZY_PORTAL_URL);
-    // Cancelling or changing the card comes back through the webhook too
-    awaitPayment();
+function startCheckout(event) {
+    openPolarPage('checkout', event && event.currentTarget);
+}
+
+function openBillingPortal(event) {
+    openPolarPage('portal', event && event.currentTarget);
 }
 
 function handleSubscriptionAction(event) {
     if (event.currentTarget.dataset.action === 'portal') {
-        openBillingPortal();
+        openBillingPortal(event);
     } else {
-        startCheckout();
+        startCheckout(event);
     }
 }
 

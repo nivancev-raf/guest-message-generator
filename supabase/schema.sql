@@ -41,25 +41,36 @@ create table if not exists public.profiles (
 );
 
 -- ---------------------------------------------------------------------------
--- Subscriptions: free trial + Lemon Squeezy subscription state, one row per user.
--- Users can only READ their own row. Only the lemon-squeezy-webhook Edge Function
+-- Subscriptions: free trial + Polar subscription state, one row per user.
+-- Users can only READ their own row. Only the polar-webhook Edge Function
 -- (service role) changes it, so nobody can make themselves "paid" from the browser.
 -- ---------------------------------------------------------------------------
 create table if not exists public.subscriptions (
     user_id            uuid primary key references auth.users (id) on delete cascade,
     trial_ends_at      timestamptz not null default (now() + interval '7 days'),
     free_forever       boolean not null default false,  -- accounts from before payments existed
-    -- Lemon Squeezy status: on_trial, active, paused, past_due, unpaid, cancelled, expired
+    -- active, on_trial, cancelled (paid until ends_at), past_due, paused, unpaid, expired
     status             text,
     renews_at          timestamptz,                     -- next payment
     ends_at            timestamptz,                     -- access ends (cancelled / expired)
     card_brand         text,
     card_last_four     text,
-    ls_subscription_id text unique,
-    ls_customer_id     text,
-    ls_updated_at      timestamptz,                     -- ignores webhooks that arrive out of order
+    provider_subscription_id text unique,               -- the payment provider's (Polar) ids
+    provider_customer_id     text,
+    provider_updated_at      timestamptz,               -- ignores webhooks that arrive out of order
     updated_at         timestamptz not null default now()
 );
+
+-- First version of this table (Lemon Squeezy) used ls_* column names
+do $$
+begin
+    if exists (select 1 from information_schema.columns
+               where table_schema = 'public' and table_name = 'subscriptions' and column_name = 'ls_subscription_id') then
+        alter table public.subscriptions rename column ls_subscription_id to provider_subscription_id;
+        alter table public.subscriptions rename column ls_customer_id to provider_customer_id;
+        alter table public.subscriptions rename column ls_updated_at to provider_updated_at;
+    end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Keep updated_at fresh

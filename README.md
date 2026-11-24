@@ -16,7 +16,7 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 - **Apartment management**: Add, edit and delete apartments directly in the app
 - **Per-apartment messages**: Reservation and garage messages can be edited per apartment, language and message type
 - **My profile**: Change the name shown in the greeting
-- **Free trial + subscription**: 7 days free, then €5 / month through Lemon Squeezy, unlocked automatically
+- **Free trial + subscription**: 7 days free, then €5 / month through Polar, unlocked automatically
 - **Message Generation**: Automatically generate personalized welcome messages (Serbian / English)
 - **WhatsApp Integration**: Send messages directly via WhatsApp
 - **PWA Support**: Install as a mobile app ("Add to Home Screen")
@@ -35,62 +35,71 @@ Visit the app: [https://nivancev-raf.github.io/guest-message-generator/](https:/
 
 > Never commit apartment details, emails or passwords to this repository.
 
-## 💳 Payments (7-day free trial, then €5 / month via Lemon Squeezy)
+## 💳 Payments (7-day free trial, then €5 / month via Polar)
 
 How it works: every new account gets 7 free days. After that, tapping **Generate** opens a
-"Your free trial has ended" sheet; apartments and templates stay viewable. **Subscribe** opens the
-Lemon Squeezy checkout with the user's account id attached. When the payment goes through, Lemon
-Squeezy calls the `lemon-squeezy-webhook` Edge Function, which writes the subscription into
-`public.subscriptions` and the app unlocks within a few seconds. Renewals, cancellations and failed
-payments arrive the same way. Users can only *read* their own subscription row.
+"Your free trial has ended" sheet; apartments and templates stay viewable. **Subscribe** asks the
+`polar-checkout` Edge Function for a Polar payment page tied to the logged-in account. When the
+payment goes through, Polar calls the `polar-webhook` Edge Function, which writes the subscription
+into `public.subscriptions`, and the app unlocks within a few seconds. Renewals, cancellations and
+failed payments arrive the same way. **Manage subscription** (Profile) opens Polar's customer portal.
+Users can only *read* their own subscription row; the Polar keys live only in Supabase secrets.
 
 Accounts that exist when you run the SQL below stay **free forever**.
-Until `LEMON_SQUEEZY_CHECKOUT_URL` is filled in `config.js`, payments are off and nobody is blocked.
+Until `PAYMENTS_ENABLED` is `true` in `config.js`, payments are off and nobody is blocked.
+
+Polar has two separate worlds with separate accounts, products, tokens and webhooks:
+**sandbox.polar.sh** (test cards, for testing) and **polar.sh** (real money). Do everything below in the
+sandbox first, then repeat steps 2–4 in production when going live.
 
 ### 1. Database
 **SQL Editor**: run the updated [`supabase/schema.sql`](supabase/schema.sql) (safe to run again).
 It adds the `subscriptions` table, starts a trial for every new sign-up and marks all existing accounts
 as free forever.
 
-### 2. Lemon Squeezy (in **Test mode** first)
-1. Create the store, then **Products → New product**: name `SmartHost Monthly`, pricing
-   **Subscription**, €5, every 1 month. Publish it.
-2. Optional: in the product's **Confirmation modal**, set the button link to
-   `https://nivancev-raf.github.io/guest-message-generator/?subscribed=1`
-3. Copy the product's checkout link (**Share**), it looks like `https://YOUR-STORE.lemonsqueezy.com/buy/...`
+### 2. Polar (start in the sandbox: sandbox.polar.sh)
+1. **Products → New product**: name `SmartHost Monthly`, **Subscription**, €5 every month, no trial
+   (the app already gives 7 days). Save, then copy the product **ID** (product page → ⋯ / Copy ID).
+2. **Settings → Developers → Access Tokens → New token** with the scopes `checkouts:write` and
+   `customer_sessions:write`. Copy it (it is shown once). It is a secret: never put it in the app or GitHub.
 
-### 3. Edge Function (Supabase)
-1. **Edge Functions → Deploy a new function → Via Editor**, name it exactly `lemon-squeezy-webhook`,
-   paste the contents of [`supabase/functions/lemon-squeezy-webhook/index.ts`](supabase/functions/lemon-squeezy-webhook/index.ts), deploy.
-   (CLI alternative: `supabase functions deploy lemon-squeezy-webhook --no-verify-jwt`)
-2. In the function's **Details / Settings**, turn **off** *Enforce JWT verification*
-   (Lemon Squeezy cannot send a Supabase login; every call is checked with the signing secret instead).
-3. Its URL is `https://YOUR-PROJECT.supabase.co/functions/v1/lemon-squeezy-webhook`
+### 3. Edge Functions (Supabase)
+Create two functions with **Edge Functions → Deploy a new function → Via Editor**, each named exactly
+as below, pasting the file's contents:
+- `polar-checkout`: [`supabase/functions/polar-checkout/index.ts`](supabase/functions/polar-checkout/index.ts)
+- `polar-webhook`: [`supabase/functions/polar-webhook/index.ts`](supabase/functions/polar-webhook/index.ts)
+
+For **both**, turn **off** *Enforce JWT verification* in the function's settings. Both check every
+request themselves (`polar-checkout` checks the user's login, `polar-webhook` checks Polar's signature).
+CLI alternative: `supabase functions deploy polar-checkout --no-verify-jwt` (same for `polar-webhook`).
 
 ### 4. Connect the two
-1. Lemon Squeezy **Settings → Webhooks → +**: the function URL above, a long random **Signing secret**,
-   and the events `subscription_created`, `subscription_updated`, `subscription_cancelled`,
-   `subscription_resumed`, `subscription_expired`, `subscription_paused`, `subscription_unpaused`.
+1. Polar **Settings → Webhooks → Add endpoint**: URL
+   `https://YOUR-PROJECT.supabase.co/functions/v1/polar-webhook`, format **Raw**, and all
+   `subscription.*` events (`subscription.created`, `.updated`, `.active`, `.canceled`, `.uncanceled`,
+   `.revoked`, `.past_due`, `.paused`, `.resumed`). Copy its **secret**.
 2. Supabase **Edge Functions → Secrets**: add
-   - `LEMONSQUEEZY_WEBHOOK_SECRET` = the same signing secret
-   - `LEMONSQUEEZY_TEST_MODE` = `true` (only while testing)
+   - `POLAR_ACCESS_TOKEN` = the access token from step 2
+   - `POLAR_PRODUCT_ID` = the product ID from step 2
+   - `POLAR_WEBHOOK_SECRET` = the webhook secret
+   - `POLAR_SERVER` = `sandbox` (change to `production` when going live)
 
 ### 5. Test (on your computer, not on the live site)
-1. In `config.js` set `LEMON_SQUEEZY_CHECKOUT_URL` to the **test** checkout link and
-   `LEMON_SQUEEZY_PORTAL_URL` to `https://YOUR-STORE.lemonsqueezy.com/billing`.
-   **Do not commit the test link**: anyone could "pay" with a test card. Run the app locally instead
+1. In `config.js` set `PAYMENTS_ENABLED = true`, but **do not commit it yet**. Run the app locally
    (`python -m http.server 8000`, open `http://localhost:8000/`).
 2. Sign up with a test account, then end its trial in the **SQL Editor**:
    `update public.subscriptions set trial_ends_at = now() where user_id = (select id from auth.users where email = 'TEST@EMAIL');`
 3. Tap Generate → Subscribe, pay with card `4242 4242 4242 4242`, any future date, any CVC.
-   The app unlocks a few seconds later; Profile shows the plan. Lemon Squeezy → Webhooks shows each delivery.
+   The app unlocks a few seconds later; Profile shows the plan, and Manage subscription opens Polar's portal.
+   Polar → Webhooks shows each delivery, Supabase → Edge Functions → Logs shows what happened.
 
 ### 6. Go live
-1. Get the store approved (**Activate store**). Lemon Squeezy reviews a public website with a
-   description, pricing, Terms / Privacy / Refund pages and a contact email.
-2. Copy the product to live mode and create the webhook again **in live mode** (same URL and secret).
-3. Put the **live** checkout link and the portal link in `config.js`, commit and deploy.
-4. Delete the `LEMONSQUEEZY_TEST_MODE` secret, so test purchases can never unlock a real account.
+1. In **polar.sh** (production): finish the payout account (Stripe, Serbian IBAN), then repeat steps 2 and 4
+   there (product, access token, webhook) and put the production values in the Supabase secrets,
+   with `POLAR_SERVER` = `production`.
+2. Polar may review the product and website before payouts. Have a public page with a description,
+   pricing, Terms / Privacy / Refund pages and a contact email.
+3. Set `PAYMENTS_ENABLED = true` in `config.js`, commit and deploy.
 
 > Messages are generated in the browser, so a technical user could get around the paywall.
 > The payment records themselves cannot be faked.
@@ -125,7 +134,8 @@ as free forever.
 ├── sw.js               # Service Worker (network first, offline fallback)
 ├── manifest.json       # PWA manifest file
 ├── supabase/schema.sql # Database tables + Row Level Security policies
-├── supabase/functions/lemon-squeezy-webhook/index.ts  # Unlocks accounts when Lemon Squeezy reports a payment
+├── supabase/functions/polar-checkout/index.ts  # Opens the Polar payment page / customer portal
+├── supabase/functions/polar-webhook/index.ts   # Unlocks accounts when Polar reports a payment
 ├── .github/workflows/keepalive.yml  # Daily keep-alive write to Supabase
 ├── icon-192.png        # App icon (192x192)
 ├── icon-512.png        # App icon (512x512)
