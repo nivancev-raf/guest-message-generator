@@ -111,7 +111,7 @@ Deno.serve(async (request) => {
             .eq('id', user.id)
             .maybeSingle();
 
-        const checkout = await polar.checkouts.create({
+        const checkoutRequest = {
             products: [PRODUCT_ID],
             external_customer_id: user.id,
             customer_email: user.email ?? null,
@@ -119,7 +119,19 @@ Deno.serve(async (request) => {
             metadata: { user_id: user.id },
             success_url: withParam(returnUrl, 'subscribed', '1'),
             return_url: returnUrl
-        });
+        };
+        let checkout;
+        try {
+            checkout = await polar.checkouts.create(checkoutRequest);
+        } catch (error) {
+            // Polar only accepts emails that can receive mail. If it rejects the account's
+            // email, open the checkout without it; the buyer types one on the payment page.
+            // deno-lint-ignore no-explicit-any
+            const rejectedEmail = (error as any)?.statusCode === 422 && JSON.stringify((error as any)?.error ?? '').includes('customer_email');
+            if (!rejectedEmail) throw error;
+            console.warn(`Polar rejected the email of user ${user.id}; opening the checkout without it`);
+            checkout = await polar.checkouts.create({ ...checkoutRequest, customer_email: null });
+        }
         return reply(200, { url: checkout.url });
     } catch (error) {
         // deno-lint-ignore no-explicit-any
