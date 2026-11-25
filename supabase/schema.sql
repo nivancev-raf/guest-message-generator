@@ -179,6 +179,9 @@ grant select, insert, update, delete on public.apartments to authenticated;
 grant select, update on public.profiles to authenticated;
 revoke all on public.subscriptions from anon, authenticated;
 grant select on public.subscriptions to authenticated;
+-- The Edge Functions (polar-webhook, polar-checkout) use the service role
+grant select, insert, update on public.subscriptions to service_role;
+grant select on public.profiles to service_role;
 -- The old keep-alive read the apartments table as anon; the write below replaces it
 revoke select on public.apartments from anon;
 
